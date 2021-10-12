@@ -25,3 +25,5 @@ echo "package some" >> $out
 echo >> $out
 go run genopts.go --opts_type SomeOpts foo bar:string baz:float64 >> $out && \
 go build $out $driver
+
+echo "ok  	github.com/spudtrooper/genopts/integtest"
