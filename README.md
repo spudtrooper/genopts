@@ -4,6 +4,14 @@ A command line tool to generate "options" functions in go.
 
 ## Usage
 
+Get it:
+
+```
+go get -u github.com/spudtrooper/genopts
+```
+
+Run it:
+
 ```
 genopts --opts_type <type> <field-spec>+
 ```
