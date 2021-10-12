@@ -29,9 +29,9 @@ func genOpts(optsType, implType string, fieldDefs []string) (string, error) {
 {{$implType := .ImplType}}
 type {{.OptsType}} func(*{{.ImplType}})
 {{range .Functions}}
-func {{.FunctionName}}({{.Field}} {{.ParamType}}) {{$optsType}} {
+func {{.FunctionName}}({{.Field.Name}} {{.Field.Type}}) {{$optsType}} {
 	return func(opts *{{$implType}}) {
-		opts.{{.Field}} = {{.Field}}
+		opts.{{.Field.Name}} = {{.Field.Name}}
 	}
 }
 {{end}}
@@ -40,15 +40,14 @@ type {{.ImplType}} struct {
 {{end}}
 }
 `
-	type function struct {
-		FunctionName string
-		ParamType    string
-		Field        string
-	}
 	type field struct {
 		Name, Type string
 	}
-	var functions []function
+	type function struct {
+		FunctionName string
+		Field        field
+	}
+
 	var fields []field
 	for _, f := range fieldDefs {
 		parts := strings.Split(f, ":")
@@ -58,16 +57,20 @@ type {{.ImplType}} struct {
 			name = parts[0]
 			typ = parts[1]
 		}
-		functionName := title(name)
-		functions = append(functions, function{
-			FunctionName: functionName,
-			Field:        name,
-			ParamType:    typ,
-		})
 		fields = append(fields, field{
 			Name: name,
 			Type: typ,
 		})
+	}
+
+	var functions []function
+	for _, f := range fields {
+		functionName := title(f.Name)
+		functions = append(functions, function{
+			FunctionName: functionName,
+			Field:        f,
+		})
+
 	}
 
 	if err := renderTemplate(&buf, tmpl, "tmpl", struct {
