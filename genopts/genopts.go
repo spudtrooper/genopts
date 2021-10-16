@@ -8,20 +8,57 @@ import (
 	"unicode"
 )
 
-func GenOpts(optsType, implType string, fieldDefs []string) (string, error) {
+// START-PASTE
+type Option func(*optionImpl)
+
+func PrefixOptsType(prefixOptsType bool) Option {
+	return func(opts *optionImpl) {
+		opts.prefixOptsType = prefixOptsType
+	}
+}
+
+func Prefix(prefix string) Option {
+	return func(opts *optionImpl) {
+		opts.prefix = prefix
+	}
+}
+
+type optionImpl struct {
+	prefixOptsType bool
+	prefix         string
+}
+
+func makeOptionImpl(opts ...Option) optionImpl {
+	var res optionImpl
+	for _, opt := range opts {
+		opt(&res)
+	}
+	return res
+}
+
+// END-PASTE
+
+func GenOpts(optsType, implType string, fieldDefs []string, opts ...Option) (string, error) {
+	o := makeOptionImpl(opts...)
 	if implType == "" {
 		s := []rune(optsType)
 		s[0] = unicode.ToLower(s[0])
 		implType = string(s) + "Impl"
 	}
-	output, err := genOpts(optsType, implType, fieldDefs)
+	var prefix string
+	if o.prefix != "" {
+		prefix = o.prefix
+	} else if o.prefixOptsType {
+		prefix = optsType
+	}
+	output, err := genOpts(optsType, implType, fieldDefs, prefix)
 	if err != nil {
 		return "", err
 	}
 	return output, nil
 }
 
-func genOpts(optsType, implType string, fieldDefs []string) (string, error) {
+func genOpts(optsType, implType string, fieldDefs []string, functionPrefix string) (string, error) {
 	var buf bytes.Buffer
 
 	const tmpl = `
@@ -38,6 +75,14 @@ func {{.FunctionName}}({{.Field.Name}} {{.Field.Type}}) {{$optsType}} {
 type {{.ImplType}} struct {
 {{range .Fields}}	{{.Name}} {{.Type}}
 {{end}}
+}
+
+func make{{.ImplTypeCaps}}(opts ...{{.OptsType}}) {{.ImplType}} {
+	var res {{.ImplType}}
+	for _, opt := range opts {
+		opt(&res)
+	}
+	return res
 }
 `
 	type field struct {
@@ -66,6 +111,9 @@ type {{.ImplType}} struct {
 	var functions []function
 	for _, f := range fields {
 		functionName := title(f.Name)
+		if functionPrefix != "" {
+			functionName = functionPrefix + functionName
+		}
 		functions = append(functions, function{
 			FunctionName: functionName,
 			Field:        f,
@@ -73,16 +121,24 @@ type {{.ImplType}} struct {
 
 	}
 
+	var implTypeCaps string
+	{
+		s := []rune(implType)
+		s[0] = unicode.ToUpper(s[0])
+		implTypeCaps = string(s)
+	}
 	if err := renderTemplate(&buf, tmpl, "tmpl", struct {
-		OptsType  string
-		ImplType  string
-		Functions []function
-		Fields    []field
+		OptsType     string
+		ImplType     string
+		ImplTypeCaps string
+		Functions    []function
+		Fields       []field
 	}{
-		OptsType:  optsType,
-		ImplType:  implType,
-		Functions: functions,
-		Fields:    fields,
+		OptsType:     optsType,
+		ImplType:     implType,
+		ImplTypeCaps: implTypeCaps,
+		Functions:    functions,
+		Fields:       fields,
 	}); err != nil {
 		return "", err
 	}

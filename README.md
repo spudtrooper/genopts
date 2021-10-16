@@ -7,8 +7,10 @@ A command line tool to generate "options" functions in go.
 Get it:
 
 ```
-go get -u github.com/spudtrooper/genopts
+go install github.com/spudtrooper/genopts
 ```
+
+Your binary will be in `~/go/bin/genopts`.
 
 Run it:
 
