@@ -11,8 +11,8 @@ import (
 var (
 	optsType       = flag.String("opts_type", "", "The name of the primary options type")
 	implType       = flag.String("impl_type", "", "The name of the implementation type; if empty this is derived from --opts_type")
-	prefixOptsType = flag.Bool("prefix_opts_type", false, "Prefix each option function with the --opts_type; cannot set both --prefix_opts_type and --prefix")
-	prefix         = flag.String("prefix", "", "Prefix each option with this string; cannot set both --prefix_opts_type and --prefix")
+	prefixOptsType = flag.Bool("prefix_opts_type", false, "Prefix each option function with the --opts_type; --prefix takes precendence over --prefix_opts_type")
+	prefix         = flag.String("prefix", "", "Prefix each option with this string; --prefix takes precendence over --prefix_opts_type")
 )
 
 func genOpts() error {
