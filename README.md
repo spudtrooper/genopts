@@ -10,12 +10,10 @@ Get it:
 go install github.com/spudtrooper/genopts
 ```
 
-Your binary will be in `~/go/bin/genopts`.
-
 Run it:
 
 ```
-genopts --opts_type <type> <field-spec>+
+~/go/bin/genopts --opts_type <type> <field-spec>+
 ```
 
 Generates boilerplate for function objects named *type* with setters
