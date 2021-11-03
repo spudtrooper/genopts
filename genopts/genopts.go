@@ -6,49 +6,21 @@ import (
 	"strings"
 	"text/template"
 	"unicode"
+
+	"github.com/spudtrooper/genopts/options"
 )
 
-// START-PASTE
-type Option func(*optionImpl)
-
-func PrefixOptsType(prefixOptsType bool) Option {
-	return func(opts *optionImpl) {
-		opts.prefixOptsType = prefixOptsType
-	}
-}
-
-func Prefix(prefix string) Option {
-	return func(opts *optionImpl) {
-		opts.prefix = prefix
-	}
-}
-
-type optionImpl struct {
-	prefixOptsType bool
-	prefix         string
-}
-
-func makeOptionImpl(opts ...Option) optionImpl {
-	var res optionImpl
-	for _, opt := range opts {
-		opt(&res)
-	}
-	return res
-}
-
-// END-PASTE
-
-func GenOpts(optsType, implType string, fieldDefs []string, opts ...Option) (string, error) {
-	o := makeOptionImpl(opts...)
+func GenOpts(optsType, implType string, fieldDefs []string, opts ...options.Option) (string, error) {
+	o := options.MakeOptions(opts...)
 	if implType == "" {
 		s := []rune(optsType)
 		s[0] = unicode.ToLower(s[0])
 		implType = string(s) + "Impl"
 	}
 	var prefix string
-	if o.prefix != "" {
-		prefix = o.prefix
-	} else if o.prefixOptsType {
+	if o.Prefix() != "" {
+		prefix = o.Prefix()
+	} else if o.PrefixOptsType() {
 		prefix = optsType
 	}
 	output, err := genOpts(optsType, implType, fieldDefs, prefix)
@@ -65,6 +37,11 @@ func genOpts(optsType, implType string, fieldDefs []string, functionPrefix strin
 {{$optsType := .OptsType}}
 {{$implType := .ImplType}}
 type {{.OptsType}} func(*{{.ImplType}})
+
+type {{.OptsType}}s interface {
+{{range .InterfaceFunctions}}	{{.FunctionName}}() {{.Field.Type}}
+{{end}}
+}
 {{range .Functions}}
 func {{.FunctionName}}({{.Field.Name}} {{.Field.Type}}) {{$optsType}} {
 	return func(opts *{{$implType}}) {
@@ -76,6 +53,8 @@ type {{.ImplType}} struct {
 {{range .Fields}}	{{.Name}} {{.Type}}
 {{end}}
 }
+{{range .InterfaceFunctions}}
+func ({{.ObjectName}} *{{$implType}}) {{.FunctionName}}() {{.Field.Type}} { return {{.ObjectName}}.{{.Field.Name}} }{{end}}
 
 func make{{.ImplTypeCaps}}(opts ...{{.OptsType}}) {{.ImplType}} {
 	var res {{.ImplType}}
@@ -91,6 +70,17 @@ func make{{.ImplTypeCaps}}(opts ...{{.OptsType}}) {{.ImplType}} {
 	type function struct {
 		FunctionName string
 		Field        field
+	}
+	type interfaceFunction struct {
+		ObjectName   string
+		FunctionName string
+		Field        field
+	}
+
+	title := func(str string) string {
+		s := []rune(str)
+		s[0] = unicode.ToUpper(s[0])
+		return string(s)
 	}
 
 	var fields []field
@@ -109,6 +99,7 @@ func make{{.ImplTypeCaps}}(opts ...{{.OptsType}}) {{.ImplType}} {
 	}
 
 	var functions []function
+	var interfaceFunctions []interfaceFunction
 	for _, f := range fields {
 		functionName := title(f.Name)
 		if functionPrefix != "" {
@@ -118,27 +109,27 @@ func make{{.ImplTypeCaps}}(opts ...{{.OptsType}}) {{.ImplType}} {
 			FunctionName: functionName,
 			Field:        f,
 		})
-
+		interfaceFunctions = append(interfaceFunctions, interfaceFunction{
+			ObjectName:   strings.ToLower(string(implType[0])),
+			FunctionName: title(f.Name),
+			Field:        f,
+		})
 	}
 
-	var implTypeCaps string
-	{
-		s := []rune(implType)
-		s[0] = unicode.ToUpper(s[0])
-		implTypeCaps = string(s)
-	}
 	if err := renderTemplate(&buf, tmpl, "tmpl", struct {
-		OptsType     string
-		ImplType     string
-		ImplTypeCaps string
-		Functions    []function
-		Fields       []field
+		OptsType           string
+		ImplType           string
+		ImplTypeCaps       string
+		Functions          []function
+		InterfaceFunctions []interfaceFunction
+		Fields             []field
 	}{
-		OptsType:     optsType,
-		ImplType:     implType,
-		ImplTypeCaps: implTypeCaps,
-		Functions:    functions,
-		Fields:       fields,
+		OptsType:           optsType,
+		ImplType:           implType,
+		ImplTypeCaps:       title(implType),
+		Functions:          functions,
+		InterfaceFunctions: interfaceFunctions,
+		Fields:             fields,
 	}); err != nil {
 		return "", err
 	}

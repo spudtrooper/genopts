@@ -6,6 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/spudtrooper/genopts/genopts"
+	"github.com/spudtrooper/genopts/options"
 )
 
 var (
@@ -19,9 +20,9 @@ func genOpts() error {
 	if *optsType == "" {
 		return errors.Errorf("--opts_type required")
 	}
-	opts := []genopts.Option{
-		genopts.Prefix(*prefix),
-		genopts.PrefixOptsType(*prefixOptsType),
+	opts := []options.Option{
+		options.Prefix(*prefix),
+		options.PrefixOptsType(*prefixOptsType),
 	}
 	output, err := genopts.GenOpts(*optsType, *implType, flag.Args(), opts...)
 	if err != nil {

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/andreyvit/diff"
+	"github.com/spudtrooper/genopts/options"
 )
 
 func TestGenOpts(t *testing.T) {
@@ -14,23 +15,28 @@ func TestGenOpts(t *testing.T) {
 		optsType string
 		implType string
 		fields   []string
-		opts     []Option
+		opts     []options.Option
 		want     string
 	}{
 		{
 			name:     "empty",
-			optsType: "SomeOptions",
+			optsType: "SomeOption",
 			implType: "",
 			fields:   []string{},
 			want: `
-type SomeOptions func(*someOptionsImpl)
+type SomeOption func(*someOptionImpl)
 
-type someOptionsImpl struct {
+type SomeOptions interface {
 
 }
 
-func makeSomeOptionsImpl(opts ...SomeOptions) someOptionsImpl {
-	var res someOptionsImpl
+type someOptionImpl struct {
+
+}
+
+
+func makeSomeOptionImpl(opts ...SomeOption) someOptionImpl {
+	var res someOptionImpl
 	for _, opt := range opts {
 		opt(&res)
 	}
@@ -40,17 +46,22 @@ func makeSomeOptionsImpl(opts ...SomeOptions) someOptionsImpl {
 		},
 		{
 			name:     "impl",
-			optsType: "SomeOptions",
+			optsType: "SomeOption",
 			implType: "explicitImpl",
 			fields:   []string{},
 			want: `
-type SomeOptions func(*explicitImpl)
+type SomeOption func(*explicitImpl)
+
+type SomeOptions interface {
+
+}
 
 type explicitImpl struct {
 
 }
 
-func makeExplicitImpl(opts ...SomeOptions) explicitImpl {
+
+func makeExplicitImpl(opts ...SomeOption) explicitImpl {
 	var res explicitImpl
 	for _, opt := range opts {
 		opt(&res)
@@ -61,39 +72,50 @@ func makeExplicitImpl(opts ...SomeOptions) explicitImpl {
 		},
 		{
 			name:     "fields",
-			optsType: "SomeOptions",
+			optsType: "SomeOption",
 			implType: "",
 			fields:   []string{"foo", "bar:string", "baz:float64"},
 			want: `
-type SomeOptions func(*someOptionsImpl)
+type SomeOption func(*someOptionImpl)
 
-func Foo(foo bool) SomeOptions {
-	return func(opts *someOptionsImpl) {
+type SomeOptions interface {
+	Foo() bool
+	Bar() string
+	Baz() float64
+
+}
+
+func Foo(foo bool) SomeOption {
+	return func(opts *someOptionImpl) {
 		opts.foo = foo
 	}
 }
 
-func Bar(bar string) SomeOptions {
-	return func(opts *someOptionsImpl) {
+func Bar(bar string) SomeOption {
+	return func(opts *someOptionImpl) {
 		opts.bar = bar
 	}
 }
 
-func Baz(baz float64) SomeOptions {
-	return func(opts *someOptionsImpl) {
+func Baz(baz float64) SomeOption {
+	return func(opts *someOptionImpl) {
 		opts.baz = baz
 	}
 }
 
-type someOptionsImpl struct {
+type someOptionImpl struct {
 	foo bool
 	bar string
 	baz float64
 
 }
 
-func makeSomeOptionsImpl(opts ...SomeOptions) someOptionsImpl {
-	var res someOptionsImpl
+func (s *someOptionImpl) Foo() bool { return s.foo }
+func (s *someOptionImpl) Bar() string { return s.bar }
+func (s *someOptionImpl) Baz() float64 { return s.baz }
+
+func makeSomeOptionImpl(opts ...SomeOption) someOptionImpl {
+	var res someOptionImpl
 	for _, opt := range opts {
 		opt(&res)
 	}
@@ -102,42 +124,53 @@ func makeSomeOptionsImpl(opts ...SomeOptions) someOptionsImpl {
 `,
 		}, {
 			name:     "prefix",
-			optsType: "SomeOptions",
+			optsType: "SomeOption",
 			implType: "",
 			fields:   []string{"foo", "bar:string", "baz:float64"},
-			opts: []Option{
-				Prefix("Prefix"),
+			opts: []options.Option{
+				options.Prefix("Prefix"),
 			},
 			want: `
-type SomeOptions func(*someOptionsImpl)
+type SomeOption func(*someOptionImpl)
 
-func PrefixFoo(foo bool) SomeOptions {
-	return func(opts *someOptionsImpl) {
+type SomeOptions interface {
+	Foo() bool
+	Bar() string
+	Baz() float64
+
+}
+
+func PrefixFoo(foo bool) SomeOption {
+	return func(opts *someOptionImpl) {
 		opts.foo = foo
 	}
 }
 
-func PrefixBar(bar string) SomeOptions {
-	return func(opts *someOptionsImpl) {
+func PrefixBar(bar string) SomeOption {
+	return func(opts *someOptionImpl) {
 		opts.bar = bar
 	}
 }
 
-func PrefixBaz(baz float64) SomeOptions {
-	return func(opts *someOptionsImpl) {
+func PrefixBaz(baz float64) SomeOption {
+	return func(opts *someOptionImpl) {
 		opts.baz = baz
 	}
 }
 
-type someOptionsImpl struct {
+type someOptionImpl struct {
 	foo bool
 	bar string
 	baz float64
 
 }
 
-func makeSomeOptionsImpl(opts ...SomeOptions) someOptionsImpl {
-	var res someOptionsImpl
+func (s *someOptionImpl) Foo() bool { return s.foo }
+func (s *someOptionImpl) Bar() string { return s.bar }
+func (s *someOptionImpl) Baz() float64 { return s.baz }
+
+func makeSomeOptionImpl(opts ...SomeOption) someOptionImpl {
+	var res someOptionImpl
 	for _, opt := range opts {
 		opt(&res)
 	}
@@ -146,42 +179,53 @@ func makeSomeOptionsImpl(opts ...SomeOptions) someOptionsImpl {
 `,
 		}, {
 			name:     "prefixOptsType",
-			optsType: "SomeOptions",
+			optsType: "SomeOption",
 			implType: "",
 			fields:   []string{"foo", "bar:string", "baz:float64"},
-			opts: []Option{
-				PrefixOptsType(true),
+			opts: []options.Option{
+				options.PrefixOptsType(true),
 			},
 			want: `
-type SomeOptions func(*someOptionsImpl)
+type SomeOption func(*someOptionImpl)
 
-func SomeOptionsFoo(foo bool) SomeOptions {
-	return func(opts *someOptionsImpl) {
+type SomeOptions interface {
+	Foo() bool
+	Bar() string
+	Baz() float64
+
+}
+
+func SomeOptionFoo(foo bool) SomeOption {
+	return func(opts *someOptionImpl) {
 		opts.foo = foo
 	}
 }
 
-func SomeOptionsBar(bar string) SomeOptions {
-	return func(opts *someOptionsImpl) {
+func SomeOptionBar(bar string) SomeOption {
+	return func(opts *someOptionImpl) {
 		opts.bar = bar
 	}
 }
 
-func SomeOptionsBaz(baz float64) SomeOptions {
-	return func(opts *someOptionsImpl) {
+func SomeOptionBaz(baz float64) SomeOption {
+	return func(opts *someOptionImpl) {
 		opts.baz = baz
 	}
 }
 
-type someOptionsImpl struct {
+type someOptionImpl struct {
 	foo bool
 	bar string
 	baz float64
 
 }
 
-func makeSomeOptionsImpl(opts ...SomeOptions) someOptionsImpl {
-	var res someOptionsImpl
+func (s *someOptionImpl) Foo() bool { return s.foo }
+func (s *someOptionImpl) Bar() string { return s.bar }
+func (s *someOptionImpl) Baz() float64 { return s.baz }
+
+func makeSomeOptionImpl(opts ...SomeOption) someOptionImpl {
+	var res someOptionImpl
 	for _, opt := range opts {
 		opt(&res)
 	}
@@ -195,6 +239,12 @@ func makeSomeOptionsImpl(opts ...SomeOptions) someOptionsImpl {
 			got, err := GenOpts(test.optsType, test.implType, test.fields, test.opts...)
 			if err != nil {
 				t.Fatalf("GenOpts(%q,%q,%v): %v", test.optsType, test.implType, test.fields, err)
+			}
+			// if true {
+			if test.name == "prefix" {
+				fmt.Printf(" >>>>>>>>>>>>>>> GOT (%s) >>>>>>>>>>>>>>>>>>>>>>\n", test.name)
+				fmt.Println(got)
+				fmt.Printf(" <<<<<<<<<<<<<<< GOT (%s) <<<<<<<<<<<<<<<<<<<<<<\n", test.name)
 			}
 			if want, got := strings.TrimSpace(test.want), strings.TrimSpace(got); want != got {
 				fmt.Println(got)
