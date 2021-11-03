@@ -12,7 +12,7 @@ import (
 func TestGenOpts(t *testing.T) {
 	var tests = []struct {
 		name     string
-		optsType string
+		optType  string
 		implType string
 		fields   []string
 		opts     []options.Option
@@ -20,7 +20,7 @@ func TestGenOpts(t *testing.T) {
 	}{
 		{
 			name:     "empty",
-			optsType: "SomeOption",
+			optType:  "SomeOption",
 			implType: "",
 			fields:   []string{},
 			want: `
@@ -46,7 +46,7 @@ func makeSomeOptionImpl(opts ...SomeOption) someOptionImpl {
 		},
 		{
 			name:     "impl",
-			optsType: "SomeOption",
+			optType:  "SomeOption",
 			implType: "explicitImpl",
 			fields:   []string{},
 			want: `
@@ -72,7 +72,7 @@ func makeExplicitImpl(opts ...SomeOption) explicitImpl {
 		},
 		{
 			name:     "fields",
-			optsType: "SomeOption",
+			optType:  "SomeOption",
 			implType: "",
 			fields:   []string{"foo", "bar:string", "baz:float64"},
 			want: `
@@ -124,7 +124,7 @@ func makeSomeOptionImpl(opts ...SomeOption) someOptionImpl {
 `,
 		}, {
 			name:     "prefix",
-			optsType: "SomeOption",
+			optType:  "SomeOption",
 			implType: "",
 			fields:   []string{"foo", "bar:string", "baz:float64"},
 			opts: []options.Option{
@@ -179,7 +179,7 @@ func makeSomeOptionImpl(opts ...SomeOption) someOptionImpl {
 `,
 		}, {
 			name:     "prefixOptsType",
-			optsType: "SomeOption",
+			optType:  "SomeOption",
 			implType: "",
 			fields:   []string{"foo", "bar:string", "baz:float64"},
 			opts: []options.Option{
@@ -236,9 +236,9 @@ func makeSomeOptionImpl(opts ...SomeOption) someOptionImpl {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := GenOpts(test.optsType, test.implType, test.fields, test.opts...)
+			got, err := GenOpts(test.optType, test.implType, test.fields, test.opts...)
 			if err != nil {
-				t.Fatalf("GenOpts(%q,%q,%v): %v", test.optsType, test.implType, test.fields, err)
+				t.Fatalf("GenOpts(%q,%q,%v): %v", test.optType, test.implType, test.fields, err)
 			}
 			// if true {
 			if test.name == "prefix" {
@@ -248,7 +248,7 @@ func makeSomeOptionImpl(opts ...SomeOption) someOptionImpl {
 			}
 			if want, got := strings.TrimSpace(test.want), strings.TrimSpace(got); want != got {
 				fmt.Println(got)
-				t.Errorf("GenOpts(%q,%q,%v) want != got:\n\n------\n%s\n-------", test.optsType, test.implType, test.fields, diff.LineDiff(want, got))
+				t.Errorf("GenOpts(%q,%q,%v) want != got:\n\n------\n%s\n-------", test.optType, test.implType, test.fields, diff.LineDiff(want, got))
 			}
 		})
 	}

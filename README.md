@@ -24,38 +24,56 @@ and type *type*.
 ## Example
 
 ```
-genopts --opts_type SomeOpts foo bar:string baz:float64
+genopts --opt_type SomeOpt foo bar:string baz:float64
 ```
 
 generates something like:
 
 ```go
-// SomeOpts are options to TODO
-type SomeOpts func(*someOptsImpl)
+type SomeOpt func(*someOptImpl)
 
-func Foo(foo bool) SomeOpts {
-	return func(opts *someOptsImpl) {
+type SomeOpts interface {
+	Foo() bool
+	Bar() string
+	Baz() float64
+
+}
+
+func Foo(foo bool) SomeOpt {
+	return func(opts *someOptImpl) {
 		opts.foo = foo
 	}
 }
 
-func Bar(bar string) SomeOpts {
-	return func(opts *someOptsImpl) {
+func Bar(bar string) SomeOpt {
+	return func(opts *someOptImpl) {
 		opts.bar = bar
 	}
 }
 
-func Baz(baz float64) SomeOpts {
-	return func(opts *someOptsImpl) {
+func Baz(baz float64) SomeOpt {
+	return func(opts *someOptImpl) {
 		opts.baz = baz
 	}
 }
 
-type someOptsImpl struct {
+type someOptImpl struct {
 	foo bool
 	bar string
 	baz float64
 
+}
+
+func (s *someOptImpl) Foo() bool { return s.foo }
+func (s *someOptImpl) Bar() string { return s.bar }
+func (s *someOptImpl) Baz() float64 { return s.baz }
+
+func makeSomeOptImpl(opts ...SomeOpt) someOptImpl {
+	var res someOptImpl
+	for _, opt := range opts {
+		opt(&res)
+	}
+	return res
 }
 ```
 

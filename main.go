@@ -10,21 +10,21 @@ import (
 )
 
 var (
-	optsType       = flag.String("opts_type", "Option", "The name of the primary options type")
+	optType        = flag.String("opt_type", "Option", "The name of the primary options type")
 	implType       = flag.String("impl_type", "", "The name of the implementation type; if empty this is derived from --opts_type")
 	prefixOptsType = flag.Bool("prefix_opts_type", false, "Prefix each option function with the --opts_type; --prefix takes precendence over --prefix_opts_type")
 	prefix         = flag.String("prefix", "", "Prefix each option with this string; --prefix takes precendence over --prefix_opts_type")
 )
 
 func genOpts() error {
-	if *optsType == "" {
-		return errors.Errorf("--opts_type required")
+	if *optType == "" {
+		return errors.Errorf("--opt_type required")
 	}
 	opts := []options.Option{
 		options.Prefix(*prefix),
 		options.PrefixOptsType(*prefixOptsType),
 	}
-	output, err := genopts.GenOpts(*optsType, *implType, flag.Args(), opts...)
+	output, err := genopts.GenOpts(*optType, *implType, flag.Args(), opts...)
 	if err != nil {
 		return err
 	}
