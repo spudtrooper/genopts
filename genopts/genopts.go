@@ -31,8 +31,6 @@ func GenOpts(optsType, implType string, fieldDefs []string, opts ...options.Opti
 }
 
 func genOpts(optsType, implType string, fieldDefs []string, functionPrefix string) (string, error) {
-	var buf bytes.Buffer
-
 	const tmpl = `
 {{$optsType := .OptsType}}
 {{$implType := .ImplType}}
@@ -116,6 +114,7 @@ func make{{.ImplTypeCaps}}(opts ...{{.OptsType}}) {{.ImplType}} {
 		})
 	}
 
+	var buf bytes.Buffer
 	if err := renderTemplate(&buf, tmpl, "tmpl", struct {
 		OptsType           string
 		ImplType           string
