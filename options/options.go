@@ -1,6 +1,7 @@
 package options
 
-// START-PASTE
+// Generate with:
+// go run main.go prefixOptsType:bool  prefix:string
 type Option func(*optionImpl)
 
 type Options interface {
