@@ -23,11 +23,35 @@ and type *type*.
 
 ## Example
 
+
+Generate your options code with:
+
 ```
 genopts --opt_type SomeOpt foo bar:string baz:float64
 ```
 
-generates something like:
+...then you could use this generated code with something like:
+
+```go
+var (
+	foo = flag.Bool("foo", false, "some bool flag")
+	bar = flag.String("bar", "", "some string flag")
+	baz = flag.Float64("baz", 0, "some float64 flag")
+)
+
+func consumesOptions(inputOpts ...SomeOpt) {
+	opts := MakeSomeOpts(inputOpts...)
+	if opts.Foo() {
+		fmt.Println(opts.Bar())
+	}
+}
+
+func producesOptions() {
+	consumesOptions(Foo(*foo), Bar(*bar), Baz(*baz))
+}
+```
+
+The generated code would look like this:
 
 ```go
 type SomeOpt func(*someOptImpl)
@@ -73,26 +97,9 @@ func makeSomeOptImpl(opts ...SomeOpt) someOptImpl {
 	}
 	return res
 }
-```
 
-that you could use with something like:
-
-```go
-var (
-	foo = flag.Bool("foo", false, "some bool flag")
-	bar = flag.String("bar", "", "some string flag")
-	baz = flag.Float64("baz", 0, "some float64 flag")
-)
-
-func consumesOptions(inputOpts ...SomeOpt) {
-	opts := MakeSomeOpts(inputOpts...)
-	if opts.Foo() {
-		fmt.Println(opts.Bar())
-	}
-}
-
-func producesOptions() {
-	consumesOptions(Foo(*foo), Bar(*bar), Baz(*baz))
+func MakeSomeOpts(opts ...SomeOpt) SomeOpts {
+	return makeSomeOptImpl(opts...)
 }
 ```
 
