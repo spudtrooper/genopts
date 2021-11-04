@@ -240,8 +240,7 @@ func makeSomeOptionImpl(opts ...SomeOption) someOptionImpl {
 			if err != nil {
 				t.Fatalf("GenOpts(%q,%q,%v): %v", test.optType, test.implType, test.fields, err)
 			}
-			// if true {
-			if test.name == "prefix" {
+			if false {
 				fmt.Printf(" >>>>>>>>>>>>>>> GOT (%s) >>>>>>>>>>>>>>>>>>>>>>\n", test.name)
 				fmt.Println(got)
 				fmt.Printf(" <<<<<<<<<<<<<<< GOT (%s) <<<<<<<<<<<<<<<<<<<<<<\n", test.name)
