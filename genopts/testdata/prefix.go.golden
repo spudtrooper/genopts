@@ -1,0 +1,45 @@
+package testdata
+
+type SomeOption func(*someOptionImpl)
+
+type SomeOptions interface {
+	Foo() bool
+	Bar() string
+	Baz() float64
+}
+
+func PrefixFoo(foo bool) SomeOption {
+	return func(opts *someOptionImpl) {
+		opts.foo = foo
+	}
+}
+
+func PrefixBar(bar string) SomeOption {
+	return func(opts *someOptionImpl) {
+		opts.bar = bar
+	}
+}
+
+func PrefixBaz(baz float64) SomeOption {
+	return func(opts *someOptionImpl) {
+		opts.baz = baz
+	}
+}
+
+type someOptionImpl struct {
+	foo bool
+	bar string
+	baz float64
+}
+
+func (s *someOptionImpl) Foo() bool    { return s.foo }
+func (s *someOptionImpl) Bar() string  { return s.bar }
+func (s *someOptionImpl) Baz() float64 { return s.baz }
+
+func makeSomeOptionImpl(opts ...SomeOption) someOptionImpl {
+	var res someOptionImpl
+	for _, opt := range opts {
+		opt(&res)
+	}
+	return res
+}

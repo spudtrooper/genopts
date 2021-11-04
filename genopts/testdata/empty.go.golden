@@ -1,0 +1,17 @@
+package testdata
+
+type SomeOption func(*someOptionImpl)
+
+type SomeOptions interface {
+}
+
+type someOptionImpl struct {
+}
+
+func makeSomeOptionImpl(opts ...SomeOption) someOptionImpl {
+	var res someOptionImpl
+	for _, opt := range opts {
+		opt(&res)
+	}
+	return res
+}

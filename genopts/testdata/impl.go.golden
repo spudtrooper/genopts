@@ -1,0 +1,17 @@
+package testdata
+
+type SomeOption func(*explicitImpl)
+
+type SomeOptions interface {
+}
+
+type explicitImpl struct {
+}
+
+func makeExplicitImpl(opts ...SomeOption) explicitImpl {
+	var res explicitImpl
+	for _, opt := range opts {
+		opt(&res)
+	}
+	return res
+}
