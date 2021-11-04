@@ -36,10 +36,14 @@ func (s *someOptionImpl) Foo() bool    { return s.foo }
 func (s *someOptionImpl) Bar() string  { return s.bar }
 func (s *someOptionImpl) Baz() float64 { return s.baz }
 
-func makeSomeOptionImpl(opts ...SomeOption) someOptionImpl {
-	var res someOptionImpl
+func makeSomeOptionImpl(opts ...SomeOption) *someOptionImpl {
+	res := &someOptionImpl{}
 	for _, opt := range opts {
-		opt(&res)
+		opt(res)
 	}
 	return res
+}
+
+func MakeSomeOptions(opts ...SomeOption) SomeOptions {
+	return makeSomeOptionImpl(opts...)
 }

@@ -8,10 +8,14 @@ type SomeOptions interface {
 type someOptionImpl struct {
 }
 
-func makeSomeOptionImpl(opts ...SomeOption) someOptionImpl {
-	var res someOptionImpl
+func makeSomeOptionImpl(opts ...SomeOption) *someOptionImpl {
+	res := &someOptionImpl{}
 	for _, opt := range opts {
-		opt(&res)
+		opt(res)
 	}
 	return res
+}
+
+func MakeSomeOptions(opts ...SomeOption) SomeOptions {
+	return makeSomeOptionImpl(opts...)
 }

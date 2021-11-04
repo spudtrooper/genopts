@@ -29,16 +29,14 @@ type optionImpl struct {
 func (o *optionImpl) PrefixOptsType() bool { return o.prefixOptsType }
 func (o *optionImpl) Prefix() string       { return o.prefix }
 
-func makeOptionImpl(opts ...Option) optionImpl {
-	var res optionImpl
+func makeOptionImpl(opts ...Option) *optionImpl {
+	res := &optionImpl{}
 	for _, opt := range opts {
-		opt(&res)
+		opt(res)
 	}
 	return res
 }
 
-// END-PASTE
-
-func MakeOptions(opts ...Option) optionImpl {
+func MakeOptions(opts ...Option) Options {
 	return makeOptionImpl(opts...)
 }

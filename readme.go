@@ -1,35 +1,10 @@
-# genopts
+package readme
 
-A command line tool to generate "options" functions in go.
+import (
+	"flag"
+	"fmt"
+)
 
-## Usage
-
-Get it:
-
-```
-go install github.com/spudtrooper/genopts
-```
-
-Run it:
-
-```
-~/go/bin/genopts --opts_type <type> <field-spec>+
-```
-
-Generates boilerplate for function objects named *type* with setters
-for each *field-spec*, where each field is of the form `<name>*` 
-for bool fields named *name* or `<name>:<type>` for fields named *name* 
-and type *type*.
-
-## Example
-
-```
-genopts --opt_type SomeOpt foo bar:string baz:float64
-```
-
-generates something like:
-
-```go
 type SomeOpt func(*someOptImpl)
 
 type SomeOpts interface {
@@ -66,18 +41,18 @@ func (s *someOptImpl) Foo() bool    { return s.foo }
 func (s *someOptImpl) Bar() string  { return s.bar }
 func (s *someOptImpl) Baz() float64 { return s.baz }
 
-func makeSomeOptImpl(opts ...SomeOpt) someOptImpl {
-	var res someOptImpl
+func makeSomeOptImpl(opts ...SomeOpt) *someOptImpl {
+	res := &someOptImpl{}
 	for _, opt := range opts {
-		opt(&res)
+		opt(res)
 	}
 	return res
 }
-```
 
-that you could use with something like:
+func MakeSomeOpts(opts ...SomeOpt) SomeOpts {
+	return makeSomeOptImpl(opts...)
+}
 
-```go
 var (
 	foo = flag.Bool("foo", false, "some bool flag")
 	bar = flag.String("bar", "", "some string flag")
@@ -94,5 +69,7 @@ func consumesOptions(inputOpts ...SomeOpt) {
 func producesOptions() {
 	consumesOptions(Foo(*foo), Bar(*bar), Baz(*baz))
 }
-```
 
+func main() {
+
+}

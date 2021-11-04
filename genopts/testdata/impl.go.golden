@@ -8,10 +8,14 @@ type SomeOptions interface {
 type explicitImpl struct {
 }
 
-func makeExplicitImpl(opts ...SomeOption) explicitImpl {
-	var res explicitImpl
+func makeExplicitImpl(opts ...SomeOption) *explicitImpl {
+	res := &explicitImpl{}
 	for _, opt := range opts {
-		opt(&res)
+		opt(res)
 	}
 	return res
+}
+
+func MakeSomeOptions(opts ...SomeOption) SomeOptions {
+	return makeExplicitImpl(opts...)
 }

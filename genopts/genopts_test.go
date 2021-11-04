@@ -70,6 +70,14 @@ func TestGenOpts(t *testing.T) {
 			if err != nil {
 				t.Fatalf("formatting %s: %v", gotWithPackage, err)
 			}
+
+			// set to true to update goldens
+			if false {
+				if err := ioutil.WriteFile(goldenFile, []byte(gotFormatted), 0755); err != nil {
+					t.Fatalf("updating golden %s: %v", goldenFile, err)
+				}
+			}
+
 			if want, got := golden, gotFormatted; want != got {
 				fmt.Println(got)
 				t.Errorf("GenOpts(%q,%q,%v) want != got:\n\n------\n%s\n-------", test.optType, test.implType, test.fieldSpecs, diff.LineDiff(want, got))

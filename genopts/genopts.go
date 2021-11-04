@@ -54,12 +54,16 @@ type {{.ImplType}} struct {
 {{range .InterfaceFunctions}}
 func ({{.ObjectName}} *{{$implType}}) {{.FunctionName}}() {{.Field.Type}} { return {{.ObjectName}}.{{.Field.Name}} }{{end}}
 
-func make{{.ImplTypeCaps}}(opts ...{{.OptsType}}) {{.ImplType}} {
-	var res {{.ImplType}}
+func make{{.ImplTypeCaps}}(opts ...{{.OptsType}}) *{{.ImplType}} {
+	res := &{{.ImplType}}{}
 	for _, opt := range opts {
-		opt(&res)
+		opt(res)
 	}
 	return res
+}
+
+func Make{{.OptsType}}s(opts ...{{.OptsType}}) {{.OptsType}}s {
+	return make{{.ImplTypeCaps}}(opts...)
 }
 `
 	type field struct {
