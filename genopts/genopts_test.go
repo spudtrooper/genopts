@@ -24,7 +24,6 @@ func TestGenOpts(t *testing.T) {
 		{
 			name:       "empty",
 			optType:    "SomeOption",
-			implType:   "",
 			fieldSpecs: []string{},
 		},
 		{
@@ -36,12 +35,10 @@ func TestGenOpts(t *testing.T) {
 		{
 			name:       "fields",
 			optType:    "SomeOption",
-			implType:   "",
 			fieldSpecs: []string{"foo", "bar:string", "baz:float64"},
 		}, {
 			name:       "prefix",
 			optType:    "SomeOption",
-			implType:   "",
 			fieldSpecs: []string{"foo", "bar:string", "baz:float64"},
 			opts: []options.Option{
 				options.Prefix("Prefix"),
@@ -49,7 +46,6 @@ func TestGenOpts(t *testing.T) {
 		}, {
 			name:       "prefixOptsType",
 			optType:    "SomeOption",
-			implType:   "",
 			fieldSpecs: []string{"foo", "bar:string", "baz:float64"},
 			opts: []options.Option{
 				options.PrefixOptsType(true),
