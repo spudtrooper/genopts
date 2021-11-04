@@ -36,7 +36,6 @@ type SomeOpts interface {
 	Foo() bool
 	Bar() string
 	Baz() float64
-
 }
 
 func Foo(foo bool) SomeOpt {
@@ -61,11 +60,10 @@ type someOptImpl struct {
 	foo bool
 	bar string
 	baz float64
-
 }
 
-func (s *someOptImpl) Foo() bool { return s.foo }
-func (s *someOptImpl) Bar() string { return s.bar }
+func (s *someOptImpl) Foo() bool    { return s.foo }
+func (s *someOptImpl) Bar() string  { return s.bar }
 func (s *someOptImpl) Baz() float64 { return s.baz }
 
 func makeSomeOptImpl(opts ...SomeOpt) someOptImpl {
