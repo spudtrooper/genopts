@@ -22,15 +22,13 @@ func TestGenOpts(t *testing.T) {
 		opts       []options.Option
 	}{
 		{
-			name:       "empty",
-			optType:    "SomeOption",
-			fieldSpecs: []string{},
+			name:    "empty",
+			optType: "SomeOption",
 		},
 		{
-			name:       "impl",
-			optType:    "SomeOption",
-			implType:   "explicitImpl",
-			fieldSpecs: []string{},
+			name:     "impl",
+			optType:  "SomeOption",
+			implType: "explicitImpl",
 		},
 		{
 			name:       "fields",
