@@ -2,7 +2,10 @@ package genopts
 
 import (
 	"bytes"
+	"flag"
 	"io"
+	"io/ioutil"
+	"path"
 	"strings"
 	"text/template"
 	"unicode"
@@ -10,10 +13,11 @@ import (
 	"github.com/spudtrooper/genopts/options"
 )
 
-func GenOpts(optsType, implType string, fieldDefs []string, opts ...options.Option) (string, error) {
+func GenOpts(optType, implType string, fieldDefs []string, opts ...options.Option) (string, error) {
 	o := options.MakeOptions(opts...)
+	originalImplType := implType
 	if implType == "" {
-		s := []rune(optsType)
+		s := []rune(optType)
 		s[0] = unicode.ToLower(s[0])
 		implType = string(s) + "Impl"
 	}
@@ -21,27 +25,83 @@ func GenOpts(optsType, implType string, fieldDefs []string, opts ...options.Opti
 	if o.Prefix() != "" {
 		prefix = o.Prefix()
 	} else if o.PrefixOptsType() {
-		prefix = optsType
+		prefix = optType
 	}
-	output, err := genOpts(optsType, implType, fieldDefs, prefix)
+	output, err := genOpts(optType, implType, fieldDefs, prefix)
 	if err != nil {
 		return "", err
 	}
+	if o.Outfile() != "" {
+		fileOutput, err := outputResult(o.Outfile(), output, optType, originalImplType, o)
+		if err != nil {
+			return "", err
+		}
+		output = fileOutput
+	}
+
 	return output, nil
 }
 
-func genOpts(optsType, implType string, fieldDefs []string, functionPrefix string) (string, error) {
+func outputResult(outfile, output, optType, implType string, opts options.Options) (string, error) {
 	const tmpl = `
-{{$optsType := .OptsType}}
-{{$implType := .ImplType}}
-type {{.OptsType}} func(*{{.ImplType}})
+package {{.Package}}
 
-type {{.OptsType}}s interface {
+// genopts {{.CommandLine}}
+
+{{.Output}}
+	`
+
+	pkg := path.Base(path.Dir(outfile))
+	var cmdLineParts []string
+	// This has to stay in sync with flags
+	if optType != "Option" { // The default
+		cmdLineParts = append(cmdLineParts, "--opt_type="+optType)
+	}
+	if implType != "" {
+		cmdLineParts = append(cmdLineParts, "--impl_type="+implType)
+	}
+	if opts.Prefix() != "" {
+		cmdLineParts = append(cmdLineParts, "--prefix="+opts.Prefix())
+	}
+	if opts.PrefixOptsType() {
+		cmdLineParts = append(cmdLineParts, "--prefix_opts_type")
+	}
+	cmdLineParts = append(cmdLineParts, "--outfile="+outfile)
+	cmdLineParts = append(cmdLineParts, flag.CommandLine.Args()...)
+	cmdLine := strings.Join(cmdLineParts, " ")
+
+	var buf bytes.Buffer
+	if err := renderTemplate(&buf, tmpl, "outputResult", struct {
+		Package     string
+		CommandLine string
+		Output      string
+	}{
+		Package:     pkg,
+		CommandLine: cmdLine,
+		Output:      output,
+	}); err != nil {
+		return "", err
+	}
+
+	if err := ioutil.WriteFile(outfile, buf.Bytes(), 0755); err != nil {
+		return "", err
+	}
+
+	return buf.String(), nil
+}
+
+func genOpts(optType, implType string, fieldDefs []string, functionPrefix string) (string, error) {
+	const tmpl = `
+{{$optType := .OptType}}
+{{$implType := .ImplType}}
+type {{.OptType}} func(*{{.ImplType}})
+
+type {{.OptType}}s interface {
 {{range .InterfaceFunctions}}	{{.FunctionName}}() {{.Field.Type}}
 {{end}}
 }
 {{range .Functions}}
-func {{.FunctionName}}({{.Field.Name}} {{.Field.Type}}) {{$optsType}} {
+func {{.FunctionName}}({{.Field.Name}} {{.Field.Type}}) {{$optType}} {
 	return func(opts *{{$implType}}) {
 		opts.{{.Field.Name}} = {{.Field.Name}}
 	}
@@ -54,7 +114,7 @@ type {{.ImplType}} struct {
 {{range .InterfaceFunctions}}
 func ({{.ObjectName}} *{{$implType}}) {{.FunctionName}}() {{.Field.Type}} { return {{.ObjectName}}.{{.Field.Name}} }{{end}}
 
-func make{{.ImplTypeCaps}}(opts ...{{.OptsType}}) *{{.ImplType}} {
+func make{{.ImplTypeCaps}}(opts ...{{.OptType}}) *{{.ImplType}} {
 	res := &{{.ImplType}}{}
 	for _, opt := range opts {
 		opt(res)
@@ -62,7 +122,7 @@ func make{{.ImplTypeCaps}}(opts ...{{.OptsType}}) *{{.ImplType}} {
 	return res
 }
 
-func Make{{.OptsType}}s(opts ...{{.OptsType}}) {{.OptsType}}s {
+func Make{{.OptType}}s(opts ...{{.OptType}}) {{.OptType}}s {
 	return make{{.ImplTypeCaps}}(opts...)
 }
 `
@@ -119,15 +179,15 @@ func Make{{.OptsType}}s(opts ...{{.OptsType}}) {{.OptsType}}s {
 	}
 
 	var buf bytes.Buffer
-	if err := renderTemplate(&buf, tmpl, "tmpl", struct {
-		OptsType           string
+	if err := renderTemplate(&buf, tmpl, "genOpts", struct {
+		OptType            string
 		ImplType           string
 		ImplTypeCaps       string
 		Functions          []function
 		InterfaceFunctions []interfaceFunction
 		Fields             []field
 	}{
-		OptsType:           optsType,
+		OptType:            optType,
 		ImplType:           implType,
 		ImplTypeCaps:       title(implType),
 		Functions:          functions,
