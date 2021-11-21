@@ -5,6 +5,7 @@ import (
 	"flag"
 	"io"
 	"io/ioutil"
+	"log"
 	"path"
 	"strings"
 	"text/template"
@@ -67,7 +68,9 @@ package {{.Package}}
 		cmdLineParts = append(cmdLineParts, "--prefix_opts_type")
 	}
 	cmdLineParts = append(cmdLineParts, "--outfile="+outfile)
-	cmdLineParts = append(cmdLineParts, flag.CommandLine.Args()...)
+	for _, fs := range flag.CommandLine.Args() {
+		cmdLineParts = append(cmdLineParts, "'"+fs+"'")
+	}
 	cmdLine := strings.Join(cmdLineParts, " ")
 
 	var buf bytes.Buffer
@@ -86,6 +89,7 @@ package {{.Package}}
 	if err := ioutil.WriteFile(outfile, buf.Bytes(), 0755); err != nil {
 		return "", err
 	}
+	log.Printf("wrote to %s", outfile)
 
 	return buf.String(), nil
 }
