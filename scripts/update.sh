@@ -11,7 +11,6 @@ if [[ -z "$file" ]]; then
 fi
 shift
 
-cmdline=$(grep "// genopts" "$file" | sed "s#// genopts ##")
+cmdline=$(grep "// genopts" "$file" | sed "s#// genopts ##" | sed "s#'##g")
 cmdline+=" $@"
-# $(dirname $0)/genopts.sh "$cmdline"
 ~/go/bin/genopts $cmdline
