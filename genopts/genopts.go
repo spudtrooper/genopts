@@ -33,17 +33,16 @@ func GenOpts(optType, implType string, fieldDefs []string, opts ...options.Optio
 		return "", err
 	}
 	if o.Outfile() != "" {
-		fileOutput, err := outputResult(o.Outfile(), output, optType, originalImplType, o)
-		if err != nil {
+		if err := outputResult(o.Outfile(), output, optType, originalImplType, o); err != nil {
 			return "", err
 		}
-		output = fileOutput
+		output = ""
 	}
 
 	return output, nil
 }
 
-func outputResult(outfile, output, optType, implType string, opts options.Options) (string, error) {
+func outputResult(outfile, output, optType, implType string, opts options.Options) error {
 	const tmpl = `
 package {{.Package}}
 
@@ -83,15 +82,15 @@ package {{.Package}}
 		CommandLine: cmdLine,
 		Output:      output,
 	}); err != nil {
-		return "", err
+		return err
 	}
 
 	if err := ioutil.WriteFile(outfile, buf.Bytes(), 0755); err != nil {
-		return "", err
+		return err
 	}
 	log.Printf("wrote to %s", outfile)
 
-	return buf.String(), nil
+	return nil
 }
 
 func genOpts(optType, implType string, fieldDefs []string, functionPrefix string) (string, error) {

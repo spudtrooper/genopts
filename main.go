@@ -28,7 +28,9 @@ func genOpts() error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(output)
+	if output != "" {
+		fmt.Println(output)
+	}
 	return nil
 }
 
