@@ -19,6 +19,8 @@ func TakesOpts(opts ...SomeOpts) {
 }
 EOF
 
+go run main.go --update
+
 
 touch $out
 echo "package some" >> $out
