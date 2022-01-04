@@ -4,7 +4,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -17,7 +16,7 @@ var (
 	}
 )
 
-func UpdateDir(dir, bin string) error {
+func UpdateDir(dir, bin, goImportsBin string) error {
 	filesAndCommandLines := map[string]string{}
 	if err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -36,12 +35,6 @@ func UpdateDir(dir, bin string) error {
 	}); err != nil {
 		return err
 	}
-
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return err
-	}
-	goImportsBin := path.Join(home, "go", "bin", "goimports")
 
 	for f, cmdLine := range filesAndCommandLines {
 		var args []string

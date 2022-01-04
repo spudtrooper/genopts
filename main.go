@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 
 	"github.com/pkg/errors"
@@ -20,6 +21,7 @@ var (
 	outfile        = flag.String("outfile", "", "Output result to this file in addition to printing to STDOUT")
 	update         = flag.Bool("update", false, "update all files recurisvely in the current directory or directory specified by --update_dir")
 	updateDir      = flag.String("update_dir", ".", "directory for update")
+	goimports      = flag.String("goimports", "", "full path to goimports, if empty we use ~/go/bin/goimports")
 )
 
 func realMain() error {
@@ -32,7 +34,15 @@ func realMain() error {
 		if err != nil {
 			return err
 		}
-		if err := genopts.UpdateDir(dir, bin); err != nil {
+		goImportsBin := *goimports
+		if goImportsBin == "" {
+			home, err := os.UserHomeDir()
+			if err != nil {
+				return err
+			}
+			goImportsBin = path.Join(home, "go", "bin", "goimports")
+		}
+		if err := genopts.UpdateDir(dir, bin, goImportsBin); err != nil {
 			return err
 		}
 		return nil

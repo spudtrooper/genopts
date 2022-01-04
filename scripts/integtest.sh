@@ -19,7 +19,9 @@ func TakesOpts(opts ...SomeOpts) {
 }
 EOF
 
+cp ~/go/bin/goimports ~/go/bin/goimports2
 go run main.go --update
+go run main.go --update --goimports ~/go/bin/goimports2
 
 
 touch $out
