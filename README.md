@@ -21,6 +21,14 @@ for each *field-spec*, where each field is of the form `<name>*`
 for bool fields named *name* or `<name>:<type>` for fields named *name* 
 and type *type*.
 
+Run it batch:
+
+```
+~/go/bin/genopts --update
+```
+
+To update all the files under the current directory or the directory specified by `--update_dir`.
+
 ## Example
 
 

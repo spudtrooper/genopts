@@ -1,6 +1,6 @@
 package options
 
-// go run main.go prefixOptsType:bool prefix:string outfile:string
+// genopts --outfile=options/options.go 'prefixOptsType:bool' 'prefix:string' 'outfile:string'
 
 type Option func(*optionImpl)
 
