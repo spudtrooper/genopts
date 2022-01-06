@@ -216,9 +216,3 @@ func renderTemplate(buf io.Writer, t string, name string, data interface{}) erro
 	}
 	return nil
 }
-
-func title(str string) string {
-	s := []rune(str)
-	s[0] = unicode.ToTitle(s[0])
-	return string(s)
-}
