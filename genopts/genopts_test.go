@@ -34,14 +34,16 @@ func TestGenOpts(t *testing.T) {
 			name:       "fields",
 			optType:    "SomeOption",
 			fieldSpecs: []string{"foo", "bar:string", "baz:float64"},
-		}, {
+		},
+		{
 			name:       "prefix",
 			optType:    "SomeOption",
 			fieldSpecs: []string{"foo", "bar:string", "baz:float64"},
 			opts: []options.Option{
 				options.Prefix("Prefix"),
 			},
-		}, {
+		},
+		{
 			name:       "prefixOptsType",
 			optType:    "SomeOption",
 			fieldSpecs: []string{"foo", "bar:string", "baz:float64"},
@@ -59,7 +61,13 @@ func TestGenOpts(t *testing.T) {
 			}
 			golden := string(goldenBytes)
 
-			got, err := GenOpts(test.optType, test.implType, test.fieldSpecs, test.opts...)
+			home, err := os.UserHomeDir()
+			if err != nil {
+				t.Fatalf("finding home: %v", err)
+			}
+			goImportsBin := path.Join(home, "go", "bin", "goimports")
+
+			got, err := GenOpts(test.optType, test.implType, ".", goImportsBin, test.fieldSpecs, test.opts...)
 			if err != nil {
 				t.Fatalf("GenOpts(%q,%q,%v): %v", test.optType, test.implType, test.fieldSpecs, err)
 			}

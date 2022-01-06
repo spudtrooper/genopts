@@ -1,0 +1,40 @@
+package testdata
+
+type SomeOption func(*someOptionImpl)
+
+type SomeOptions interface {
+	Foo() bool
+	Dur() time.Duration
+}
+
+func SomeOptionFoo(foo bool) SomeOption {
+	return func(opts *someOptionImpl) {
+		opts.foo = foo
+	}
+}
+
+func SomeOptionDur(dur time.Duration) SomeOption {
+	return func(opts *someOptionImpl) {
+		opts.dur = dur
+	}
+}
+
+type someOptionImpl struct {
+	foo bool
+	dur time.Duration
+}
+
+func (s *someOptionImpl) Foo() bool          { return s.foo }
+func (s *someOptionImpl) Dur() time.Duration { return s.dur }
+
+func makeSomeOptionImpl(opts ...SomeOption) *someOptionImpl {
+	res := &someOptionImpl{}
+	for _, opt := range opts {
+		opt(res)
+	}
+	return res
+}
+
+func MakeSomeOptions(opts ...SomeOption) SomeOptions {
+	return makeSomeOptionImpl(opts...)
+}

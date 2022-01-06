@@ -25,39 +25,40 @@ var (
 )
 
 func realMain() error {
-	if *update {
-		dir, err := filepath.Abs(*updateDir)
+	goImportsBin := *goimports
+	if goImportsBin == "" {
+		home, err := os.UserHomeDir()
 		if err != nil {
 			return err
 		}
+		goImportsBin = path.Join(home, "go", "bin", "goimports")
+	}
+	dir, err := filepath.Abs(*updateDir)
+	if err != nil {
+		return err
+	}
+
+	if *update {
 		bin, err := os.Executable()
 		if err != nil {
 			return err
-		}
-		goImportsBin := *goimports
-		if goImportsBin == "" {
-			home, err := os.UserHomeDir()
-			if err != nil {
-				return err
-			}
-			goImportsBin = path.Join(home, "go", "bin", "goimports")
 		}
 		if err := genopts.UpdateDir(dir, bin, goImportsBin); err != nil {
 			return err
 		}
 		return nil
 	}
-	if err := genOpts(); err != nil {
+	if err := genOpts(dir, goImportsBin); err != nil {
 		return err
 	}
 	return nil
 }
 
-func genOpts() error {
+func genOpts(dir, goImportsBin string) error {
 	if *optType == "" {
 		return errors.Errorf("--opt_type required")
 	}
-	output, err := genopts.GenOpts(*optType, *implType, flag.Args(),
+	output, err := genopts.GenOpts(*optType, *implType, dir, goImportsBin, flag.Args(),
 		options.Prefix(*prefix),
 		options.PrefixOptsType(*prefixOptsType),
 		options.Outfile(*outfile))

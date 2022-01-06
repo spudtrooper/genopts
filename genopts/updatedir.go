@@ -1,9 +1,7 @@
 package genopts
 
 import (
-	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -45,10 +43,7 @@ func UpdateDir(dir, bin, goImportsBin string) error {
 		if err := run(dir, bin, args...); err != nil {
 			return err
 		}
-		if err := run(dir, goImportsBin, "-w", f); err != nil {
-			return err
-		}
-		if err := run(dir, "go", "fmt", f); err != nil {
+		if err := postGenCleanup(goImportsBin, dir, f); err != nil {
 			return err
 		}
 	}
@@ -78,16 +73,4 @@ func checkForUpdate(f string) (string, error) {
 		}
 	}
 	return "", nil
-}
-
-func run(dir, command string, args ...string) error {
-	log.Printf("running from %s: %s %s", dir, command, strings.Join(args, " "))
-	cmd := exec.Command(command, args...)
-	cmd.Dir = dir
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		return err
-	}
-	return nil
 }

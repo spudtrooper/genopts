@@ -14,7 +14,7 @@ import (
 	"github.com/spudtrooper/genopts/options"
 )
 
-func GenOpts(optType, implType string, fieldDefs []string, opts ...options.Option) (string, error) {
+func GenOpts(optType, implType string, dir, goImportsBin string, fieldDefs []string, opts ...options.Option) (string, error) {
 	o := options.MakeOptions(opts...)
 	originalImplType := implType
 	if implType == "" {
@@ -34,6 +34,9 @@ func GenOpts(optType, implType string, fieldDefs []string, opts ...options.Optio
 	}
 	if o.Outfile() != "" {
 		if err := outputResult(o.Outfile(), output, optType, originalImplType, o); err != nil {
+			return "", err
+		}
+		if err := postGenCleanup(goImportsBin, dir, o.Outfile()); err != nil {
 			return "", err
 		}
 		output = ""
