@@ -21,7 +21,7 @@ for each *field-spec*, where each field is of the form `<name>*`
 for bool fields named *name* or `<name>:<type>` for fields named *name* 
 and type *type*.
 
-Run it batch:
+Run in batch:
 
 ```
 ~/go/bin/genopts --update
