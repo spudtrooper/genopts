@@ -12,7 +12,7 @@ go install github.com/spudtrooper/genopts
 
 Run it:
 
-```
+```bash
 ~/go/bin/genopts --opts_type <type> <field-spec>+
 ```
 
