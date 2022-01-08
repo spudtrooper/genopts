@@ -9,6 +9,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/spudtrooper/genopts/genopts"
+	"github.com/spudtrooper/genopts/gitversion"
 	"github.com/spudtrooper/genopts/options"
 	"github.com/spudtrooper/goutil/check"
 )
@@ -25,6 +26,9 @@ var (
 )
 
 func realMain() error {
+	if gitversion.CheckVersionFlag() {
+		return nil
+	}
 	goImportsBin := *goimports
 	if goImportsBin == "" {
 		home, err := os.UserHomeDir()
