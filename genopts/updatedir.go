@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/spudtrooper/goutil/io"
+	"github.com/spudtrooper/goutil/sets"
 )
 
 var (
@@ -14,11 +15,15 @@ var (
 	}
 )
 
-func UpdateDir(dir, bin, goImportsBin string) error {
+func UpdateDir(dir, bin, goImportsBin string, excludedDirs []string) error {
+	excludedDirSet := sets.String(excludedDirs)
 	filesAndCommandLines := map[string]string{}
 	if err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return nil
+		}
+		if info.IsDir() && excludedDirSet[filepath.Base(path)] {
+			return filepath.SkipDir
 		}
 		if !info.IsDir() && filepath.Ext(path) == ".go" {
 			cmdLine, err := checkForUpdate(path)
