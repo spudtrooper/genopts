@@ -32,6 +32,7 @@ var (
 	excludeDirs    = flag.String("exclude_dirs", "", "comma-separated list of directory base names to exclude when --update is set")
 	config         = flag.String("config", "", "absolute location of config. If empty we'll look in $update_dir/.genopts")
 	writeConfig    = flag.Bool("write_config", false, "update the expected config file. This is used to set the config after setting explicit flags")
+	quiet          = flag.Bool("quiet", false, "quite logging")
 )
 
 type Config struct {
@@ -61,7 +62,9 @@ func findConfig() (Config, error) {
 	if err := json.Unmarshal(b, &config); err != nil {
 		return Config{}, err
 	}
-	log.Printf("using config from %s", configFile)
+	if !*quiet {
+		log.Printf("using config from %s", configFile)
+	}
 	return config, nil
 }
 
@@ -101,7 +104,7 @@ func realMain() error {
 			return err
 		}
 		log.Printf("wrote config to %s", configFile)
-	} else if cfg.Empty() && (*goimports != "" || *excludeDirs != "") {
+	} else if !*quiet && cfg.Empty() && (*goimports != "" || *excludeDirs != "") {
 		expectedConfigFile := or.String(*config, path.Join(*updateDir, ".genopts"))
 		fmt.Printf("***\n")
 		fmt.Printf("*** To run with this configuration without passing explicit flags,\n")

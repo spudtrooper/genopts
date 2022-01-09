@@ -41,6 +41,7 @@ func UpdateDir(dir, bin, goImportsBin string, excludedDirs []string) error {
 
 	for f, cmdLine := range filesAndCommandLines {
 		var args []string
+		args = append(args, "--quiet")
 		for _, arg := range strings.Split(cmdLine, " ") {
 			arg = removeQuotes(arg)
 			args = append(args, arg)
