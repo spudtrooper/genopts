@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/spudtrooper/genopts/genopts"
 	"github.com/spudtrooper/genopts/gitversion"
 	"github.com/spudtrooper/genopts/options"
@@ -21,7 +20,7 @@ import (
 )
 
 var (
-	optType        = flag.String("opt_type", "Option", "The name of the primary options type")
+	optType        = flag.String("opt_type", "", "The name of the primary options type. If empty and there is a prefix, --opt_type is the prefix + \"Option\"; if prefix is empty --opt_type is \"Option\"")
 	implType       = flag.String("impl_type", "", "The name of the implementation type; if empty this is derived from --opts_type")
 	prefixOptsType = flag.Bool("prefix_opts_type", false, "Prefix each option function with the --opts_type; --prefix takes precendence over --prefix_opts_type")
 	prefix         = flag.String("prefix", "", "Prefix each option with this string; --prefix takes precendence over --prefix_opts_type")
@@ -139,9 +138,6 @@ func realMain() error {
 }
 
 func genOpts(dir, goImportsBin string) error {
-	if *optType == "" {
-		return errors.Errorf("--opt_type required")
-	}
 	output, err := genopts.GenOpts(*optType, *implType, dir, goImportsBin, flag.Args(),
 		options.Prefix(*prefix),
 		options.PrefixOptsType(*prefixOptsType),

@@ -1,49 +1,49 @@
 package testdata
 
-type SomeOption func(*someOptionImpl)
+type PrefixOption func(*prefixOptionImpl)
 
-type SomeOptions interface {
+type PrefixOptions interface {
 	Foo() bool
 	Bar() string
 	Baz() float64
 }
 
-func PrefixFoo(foo bool) SomeOption {
-	return func(opts *someOptionImpl) {
+func PrefixFoo(foo bool) PrefixOption {
+	return func(opts *prefixOptionImpl) {
 		opts.foo = foo
 	}
 }
 
-func PrefixBar(bar string) SomeOption {
-	return func(opts *someOptionImpl) {
+func PrefixBar(bar string) PrefixOption {
+	return func(opts *prefixOptionImpl) {
 		opts.bar = bar
 	}
 }
 
-func PrefixBaz(baz float64) SomeOption {
-	return func(opts *someOptionImpl) {
+func PrefixBaz(baz float64) PrefixOption {
+	return func(opts *prefixOptionImpl) {
 		opts.baz = baz
 	}
 }
 
-type someOptionImpl struct {
+type prefixOptionImpl struct {
 	foo bool
 	bar string
 	baz float64
 }
 
-func (s *someOptionImpl) Foo() bool    { return s.foo }
-func (s *someOptionImpl) Bar() string  { return s.bar }
-func (s *someOptionImpl) Baz() float64 { return s.baz }
+func (p *prefixOptionImpl) Foo() bool    { return p.foo }
+func (p *prefixOptionImpl) Bar() string  { return p.bar }
+func (p *prefixOptionImpl) Baz() float64 { return p.baz }
 
-func makeSomeOptionImpl(opts ...SomeOption) *someOptionImpl {
-	res := &someOptionImpl{}
+func makePrefixOptionImpl(opts ...PrefixOption) *prefixOptionImpl {
+	res := &prefixOptionImpl{}
 	for _, opt := range opts {
 		opt(res)
 	}
 	return res
 }
 
-func MakeSomeOptions(opts ...SomeOption) SomeOptions {
-	return makeSomeOptionImpl(opts...)
+func MakePrefixOptions(opts ...PrefixOption) PrefixOptions {
+	return makePrefixOptionImpl(opts...)
 }

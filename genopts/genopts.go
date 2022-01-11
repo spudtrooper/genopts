@@ -17,16 +17,20 @@ import (
 func GenOpts(optType, implType string, dir, goImportsBin string, fieldDefs []string, opts ...options.Option) (string, error) {
 	o := options.MakeOptions(opts...)
 	originalImplType := implType
+	var prefix string
+	if o.Prefix() != "" {
+		prefix = o.Prefix()
+		optType = prefix + "Option"
+	} else if o.PrefixOptsType() {
+		prefix = optType
+	}
+	if optType == "" {
+		optType = "Option"
+	}
 	if implType == "" {
 		s := []rune(optType)
 		s[0] = unicode.ToLower(s[0])
 		implType = string(s) + "Impl"
-	}
-	var prefix string
-	if o.Prefix() != "" {
-		prefix = o.Prefix()
-	} else if o.PrefixOptsType() {
-		prefix = optType
 	}
 	output, err := genOpts(optType, implType, fieldDefs, prefix)
 	if err != nil {
