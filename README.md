@@ -242,8 +242,7 @@ genopts --update --excluded_dirs=foo,bar,baz --goimports=path/to/goimports
 
 # Grow tired of passing --excluded_dirs and --goimports
 # Decide to write the config
-genopts --write_config \
-        --update --excluded_dirs=foo,bar,baz --goimports=path/to/goimports
+genopts --update --excluded_dirs=foo,bar,baz --goimports=path/to/goimports --write_config
 
 ... writes the --excluded_dirs and --goimports flags to .genopts
 
