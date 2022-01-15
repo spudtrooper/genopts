@@ -26,7 +26,13 @@ you can run:
 genopts --prefix Foo 'bar:bool' 'baz:int' 'boo:string'
 ```
 
-which will generate the interface `FooOption`, constructor `MakeFooOptions`, and wrappers `FooBar(bool)`, `FooBaz(int)` & `FooBoo(string)`, so you could have cleaner and easier-to-maintain code like:
+and generate some coode like the
+
+*  `FooOption` and `FooOptions` interfaces,
+*  `MakeFooOptions` constructor, and 
+*  `FooBar(bool)`, `FooBaz(int)` & `FooBoo(string)` wrappers
+  
+so you could have cleaner and easier-to-maintain code like:
 
 ```go
 import "github.com/spudtrooper/goutil/or"
