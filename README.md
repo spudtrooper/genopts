@@ -182,6 +182,8 @@ e.g. from above:
 
 		% genopts --update
 
+4.  Repeat
+
 ## Usage
 
 Get it:
