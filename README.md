@@ -1,6 +1,188 @@
 # genopts
 
-A command line tool to generate "options" functions in go.
+A command line tool to generate *optional* parameters for functions.
+
+## tl;dr
+
+Instead of having functions with explicit *optional* parameters like:
+
+```go
+func Foo(requiredString string, optBar bool, optBaz int, optBoo string) { ... }
+
+func Usage() {
+	...
+	Foo("some required 1", true, 0, "")
+	...
+	Foo("some required 2", false, 1, "")
+	...
+	Foo("some required 3", false, 0, "optional string")
+	...
+}
+```
+
+you can run:
+
+```bash
+genopts --prefix Foo 'bar:bool' 'baz:int' 'boo:string'
+```
+
+which will generate the interface `FooOption`, constructor `MakeFooOptions`, and wrappers `FooBar(bool)`, `FooBaz(int)` & `FooBoo(string)`, so you could have cleaner and easier-to-maintain code like:
+
+```go
+import "github.com/spudtrooper/goutil/or"
+
+func Foo(requiredString string bool, fOpts...FooOption) { 
+	opts := MakeFooOptions(fOpts...)
+
+	bar := or.Bool(opts.Bar(), false)
+	baz := or.Int(opts.Baz(), 0)
+	boo := or.String(opts.Boo(), "")
+
+	...
+ }
+
+func Usage() {
+	...
+	Foo("some required 1", FooBar(true))
+	...
+	Foo("some required 2", FooBaz(1))
+	...
+	Foo("some required 3", FooBoo("optional string"))
+	...
+}
+```
+
+## Motivation
+
+Say you have a function that takes one required arguments and three optional arguments, like:
+
+```go
+func Foo(requiredString string bool, optInt int, optString string) { ... }
+```
+
+The pain of treating the "optional" arguments as optional is:
+
+1.	All callers have to pass these, and
+1.  All callers have to by sync w.r.t. the **correct defaults**
+
+(2) can be alleviated by always passing canonical defaults (e.g. `false` bools, `0` numbers, `""` strings), but there's still room for error. 
+
+Assuming we only have the first problem, if we have 3 calls to `Foo`, each passing the required string and one of the optional arguments then we would have the following:
+
+```go
+func Foo(requiredString string, optBar bool, optBaz int, optBoo string) { ... }
+
+func Usage() {
+	...
+	Foo("some required 1", true, 0, "")
+	...
+	Foo("some required 2", false, 1, "")
+	...
+	Foo("some required 3", false, 0, "optional string")
+	...
+}
+```
+
+Some corrolaries to the pain above are:
+
+1. If you add an parameter to `Foo`, you have to update each caller, e.g.
+
+```go
+func Foo(requiredString string, optBar bool, optBaz int, optBoo string, newOptBam float64) { ... }
+
+func Usage() {
+	...
+	Foo("some required 1", true, 0, "", 0)
+	...
+	Foo("some required 2", false, 1, "", 0)
+	...
+	Foo("some required 3", false, 0, "optional string", 0)
+	...
+}
+```
+
+2. If you have multiple parameters of the same type it can get confusing, e.g.
+
+```go
+func Foo2(requiredString string bool, optInt1 int, optInt2 int, optInt3 int) { ... }
+
+func Usage() {
+	...
+	Foo2("some required 1", 1, 0, 0)
+	...
+	Foo2("some required 2", 0, 2, 0)
+	...
+	Foo2("some required 3", 0, 0, 3)
+	...
+}
+```
+
+## Solution
+
+The solution provided by this package is easily-generated code for named optional parameters to go functions. So, the above example would look like this instead:
+
+```go
+import "github.com/spudtrooper/goutil/or"
+
+func Foo(requiredString string bool, fOpts...FooOption) { 
+	opts := MakeFooOptions(fOpts...)
+
+	bar := or.Bool(opts.Bar(), false)
+	baz := or.Int(opts.Bar(), 0)
+	boo := or.String(opts.Bar(), "")
+
+	...
+ }
+
+func Usage() {
+	...
+	Foo("some required 1", FooBar(true))
+	...
+	Foo("some required 2", FooBaz(1))
+	...
+	Foo("some required 3", FooBoo("optional string"))
+	...
+}
+```
+
+To generate the code for this you would run:
+
+```bash
+genopts --prefix Foo 'bar:bool' 'baz:int' 'boo:string'
+```
+
+The benefits are:
+
+1.  Adding another parameter is easy, you just rerun the command above with one more argument.
+1.  You don't have to update the existing callers
+1.  The parameters are named, so you don't run into the many-parameters-of-the-same-type problem.
+1.  Defaults are controlled by the functions; callers don't have to be in sync with the defaults
+1.  Caller code is cleaner; i.e. is clear what non-defaults are being passed because these are the **only** arguments passed.
+
+## Idiom
+
+1.  Have one file per function
+2.  Use the `--outfile` flag to write directly to the file. This file will contain the command line that generated the file as comments.
+3.  When you want to modify existing options, modify the commented command line in the file and update with:
+
+		% genopts --update
+
+
+e.g. from above:
+
+1. Generate the initial options
+
+		% genopts --prefix Foo --outfile path/to/foooptions.go \
+			'bar:bool' 'baz:int' 'boo:string'
+
+2.  To add the new `float64` optiona, update the commented command line in `path/to/foooptions.go` to be:
+
+		// genopts --prefix Foo --outfile path/to/foooptions.go \
+			'bar:bool' 'baz:int' 'boo:string' 'bam:float64'
+
+3.  Update all relevant files in the current directory:
+
+		% genopts --update
 
 ## Usage
 
