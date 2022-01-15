@@ -172,8 +172,7 @@ e.g. from above:
 
 1. Generate the initial options
 
-		% genopts --prefix Foo --outfile path/to/foooptions.go \
-			'bar:bool' 'baz:int' 'boo:string'
+		% genopts --prefix Foo --outfile path/to/foooptions.go 'bar:bool' 'baz:int' 'boo:string'
 
 2.  To add the new `float64` optiona, update the commented command line in `path/to/foooptions.go` to be:
 
