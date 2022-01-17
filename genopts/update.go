@@ -3,6 +3,7 @@ package genopts
 import (
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/spudtrooper/genopts/log"
@@ -40,7 +41,14 @@ func UpdateDir(dir, bin, goImportsBin string, excludedDirs []string) error {
 		return err
 	}
 
-	for f, cmdLine := range filesAndCommandLines {
+	var files []string
+	for f := range filesAndCommandLines {
+		files = append(files, f)
+	}
+	sort.Strings(files)
+
+	for _, f := range files {
+		cmdLine := filesAndCommandLines[f]
 		if err := updateFile(f, bin, goImportsBin, dir, cmdLine); err != nil {
 			return err
 		}
