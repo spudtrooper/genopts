@@ -27,6 +27,7 @@ var (
 	outfile        = flag.String("outfile", "", "Output result to this file in addition to printing to STDOUT")
 	update         = flag.Bool("update", false, "update all files recurisvely in the current directory or directory specified by --update_dir")
 	updateDir      = flag.String("update_dir", ".", "directory for update")
+	updateFile     = flag.String("update_file", "", "single file to update")
 	goimports      = flag.String("goimports", "", "full path to goimports, if empty we use ~/go/bin/goimports")
 	excludeDirs    = flag.String("exclude_dirs", "", "comma-separated list of directory base names to exclude when --update is set")
 	config         = flag.String("config", "", "absolute location of config. If empty we'll look in $update_dir/.genopts")
@@ -125,6 +126,17 @@ func realMain() error {
 			}
 		}
 		if err := genopts.UpdateDir(dir, bin, goImportsBin, excludedDirs); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	if *updateFile != "" {
+		bin, err := os.Executable()
+		if err != nil {
+			return err
+		}
+		if err := genopts.UpdateFile(*updateFile, bin, goImportsBin); err != nil {
 			return err
 		}
 		return nil

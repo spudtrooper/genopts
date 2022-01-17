@@ -54,7 +54,7 @@ func TestGenOpts(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			goldenFile := path.Join("testdata", fmt.Sprintf("%s.go.golden", test.name))
+			goldenFile := path.Join("testdata", "goldens", fmt.Sprintf("%s.go.golden", test.name))
 			goldenBytes, err := ioutil.ReadFile(goldenFile)
 			if err != nil {
 				t.Fatalf("reading file: %s: %v", goldenFile, err)
@@ -71,7 +71,7 @@ func TestGenOpts(t *testing.T) {
 			if err != nil {
 				t.Fatalf("GenOpts(%q,%q,%v): %v", test.optType, test.implType, test.fieldSpecs, err)
 			}
-			gotWithPackage := "package testdata\n" + got
+			gotWithPackage := "package goldens\n" + got
 			tmp := goldenFile + ".tmp"
 			defer os.Remove(tmp)
 			gotFormatted, err := gofmt(gotWithPackage, tmp)
