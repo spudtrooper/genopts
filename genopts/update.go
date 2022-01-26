@@ -7,7 +7,10 @@ import (
 	"strings"
 
 	"github.com/spudtrooper/genopts/log"
+	"github.com/spudtrooper/goutil/errors"
 	"github.com/spudtrooper/goutil/io"
+	"github.com/spudtrooper/goutil/or"
+	"github.com/spudtrooper/goutil/parallel"
 	"github.com/spudtrooper/goutil/sets"
 )
 
@@ -17,7 +20,10 @@ var (
 	}
 )
 
-func UpdateDir(dir, bin, goImportsBin string, excludedDirs []string) error {
+func UpdateDir(dir, bin, goImportsBin string, excludedDirs []string, uOpts ...UpdateOption) error {
+	opts := MakeUpdateOptions(uOpts...)
+	threads := or.Int(opts.Threads(), 10)
+
 	excludedDirSet := sets.String(excludedDirs)
 	filesAndCommandLines := map[string]string{}
 	if err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
@@ -41,20 +47,31 @@ func UpdateDir(dir, bin, goImportsBin string, excludedDirs []string) error {
 		return err
 	}
 
-	var files []string
-	for f := range filesAndCommandLines {
-		files = append(files, f)
-	}
-	sort.Strings(files)
+	files := make(chan interface{})
+	go func() {
+		var sorted []string
+		for f := range filesAndCommandLines {
+			sorted = append(sorted, f)
+		}
+		sort.Strings(sorted)
+		for _, f := range sorted {
+			files <- f
+		}
+		close(files)
+	}()
 
-	for _, f := range files {
+	col := errors.MakeSyncErrorCollector()
+
+	parallel.ExecAndDrain(files, threads, func(i interface{}) (interface{}, error) {
+		f := i.(string)
 		cmdLine := filesAndCommandLines[f]
 		if err := updateFile(f, bin, goImportsBin, dir, cmdLine); err != nil {
-			return err
+			col.Add(err)
 		}
-	}
+		return nil, nil
+	})
 
-	return nil
+	return col.Build()
 }
 
 func UpdateFile(f, bin, goImportsBin string) error {
