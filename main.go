@@ -113,7 +113,7 @@ func realMain() error {
 		fmt.Printf("***\n")
 	}
 
-	if *update {
+	if *update || len(os.Args) == 1 {
 		bin, err := os.Executable()
 		if err != nil {
 			return err
