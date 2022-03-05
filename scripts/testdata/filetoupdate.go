@@ -1,6 +1,8 @@
 package some
 
-// genopts --opt_type=FileToUpdateOption --prefix=FileToUpdate --outfile=some/filetoupdate.go 'foo' 'bar:int' 'baz:string'
+//go:generate genopts --opt_type=FileToUpdateOption --prefix=FileToUpdate --outfile=some/filetoupdate.go 'foo' 'bar:int' 'baz:string'
+
+//
 
 type FileToUpdateOption func(*fileToUpdateOptionImpl)
 

@@ -1,6 +1,6 @@
 package options
 
-// genopts --outfile=options/options.go 'prefixOptsType:bool' 'prefix:string' 'outfile:string'
+//go:generate genopts --outfile=options/options.go 'prefixOptsType:bool' 'prefix:string' 'outfile:string'
 
 type Option func(*optionImpl)
 

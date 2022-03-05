@@ -53,7 +53,7 @@ func outputResult(outfile, output, optType, implType string, opts options.Option
 	const tmpl = `
 package {{.Package}}
 
-// genopts {{.CommandLine}}
+//go:generate genopts {{.CommandLine}}
 
 {{.Output}}
 	`

@@ -1,6 +1,6 @@
 package genopts
 
-// genopts --opt_type=UpdateOption --prefix=Update --outfile=genopts/updateoptionis.go 'threads:int'
+//go:generate genopts --opt_type=UpdateOption --prefix=Update --outfile=genopts/updateoptionis.go 'threads:int'
 
 type UpdateOption func(*updateOptionImpl)
 
