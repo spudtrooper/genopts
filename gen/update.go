@@ -1,4 +1,4 @@
-package genopts
+package gen
 
 import (
 	"os"
@@ -6,8 +6,9 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/spudtrooper/genopts/log"
-	"github.com/spudtrooper/goutil/errors"
+	goutilerrors "github.com/spudtrooper/goutil/errors"
 	"github.com/spudtrooper/goutil/io"
 	"github.com/spudtrooper/goutil/or"
 	"github.com/spudtrooper/goutil/parallel"
@@ -61,7 +62,7 @@ func UpdateDir(dir, bin, goImportsBin string, excludedDirs []string, uOpts ...Up
 		close(files)
 	}()
 
-	col := errors.MakeSyncErrorCollector()
+	col := goutilerrors.MakeSyncErrorCollector()
 
 	parallel.ExecAndDrain(files, threads, func(i interface{}) (interface{}, error) {
 		f := i.(string)
@@ -98,11 +99,51 @@ func UpdateFile(f, bin, goImportsBin string) error {
 
 func updateFile(f, bin, goImportsBin, dir, cmdLine string) error {
 	var args []string
-	args = append(args, "--quiet")
-	for _, arg := range strings.Split(cmdLine, " ") {
-		arg = removeQuotes(arg)
-		args = append(args, arg)
+
+	addOutfile := func() error {
+		pwd, err := os.Getwd()
+		if err != nil {
+			return errors.Errorf("os.Getwd: %v", err)
+		}
+		abs, err := filepath.Abs(f)
+		if err != nil {
+			return errors.Errorf("filepath.Abs(%q): %v", f, err)
+		}
+		rel, err := filepath.Rel(pwd, abs)
+		if err != nil {
+			return errors.Errorf("filepath.Rel(%q,%q): %v", pwd, abs, err)
+		}
+		args = append(args, "--outfile")
+		args = append(args, rel)
+		return nil
 	}
+
+	args = append(args, "--batch")
+	if *verboseRun {
+		args = append(args, "--verbose_run")
+	}
+	if err := addOutfile(); err != nil {
+		return err
+	}
+	cmdLineParts := strings.Split(cmdLine, " ")
+	for i := 0; i < len(cmdLineParts); {
+		arg := cmdLineParts[i]
+		i++
+		arg = removeQuotes(arg)
+		if strings.HasPrefix(arg, "--outfile=") {
+			if err := addOutfile(); err != nil {
+				return err
+			}
+		} else if arg == "--outfile" {
+			i++
+			if err := addOutfile(); err != nil {
+				return err
+			}
+		} else {
+			args = append(args, arg)
+		}
+	}
+
 	if err := run(dir, bin, args...); err != nil {
 		return err
 	}

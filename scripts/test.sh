@@ -1,5 +1,5 @@
 #!/bin/sh
 
 dir=$(dirname $0)
-go test ./genopts
+go test gen gitversion
 $dir/integtest.sh

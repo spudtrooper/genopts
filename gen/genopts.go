@@ -1,21 +1,27 @@
-package genopts
+package gen
 
 import (
 	"bytes"
 	"flag"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"path"
+	"path/filepath"
 	"strings"
 	"text/template"
 	"unicode"
 
-	"github.com/spudtrooper/genopts/options"
+	"github.com/pkg/errors"
 )
 
-func GenOpts(optType, implType string, dir, goImportsBin string, fieldDefs []string, opts ...options.Option) (string, error) {
-	o := options.MakeOptions(opts...)
+func GenOpts(optType, implType string, dir, goImportsBin string, fieldDefs []string, opts ...GenOptsOption) (string, error) {
+	dir = removeQuotes(dir)
+	goImportsBin = removeQuotes(goImportsBin)
+	fieldDefs = removeQuotesSlice(fieldDefs)
+
+	o := MakeGenOptsOptions(opts...)
 	originalImplType := implType
 	var prefix string
 	if o.Prefix() != "" {
@@ -49,7 +55,15 @@ func GenOpts(optType, implType string, dir, goImportsBin string, fieldDefs []str
 	return output, nil
 }
 
-func outputResult(outfile, output, optType, implType string, opts options.Options) error {
+func removeQuotesSlice(ss []string) []string {
+	var res []string
+	for _, s := range ss {
+		res = append(res, removeQuotes(s))
+	}
+	return res
+}
+
+func outputResult(outfile, output, optType, implType string, opts GenOptsOptions) error {
 	const tmpl = `
 package {{.Package}}
 
@@ -58,7 +72,11 @@ package {{.Package}}
 {{.Output}}
 	`
 
-	pkg := path.Base(path.Dir(outfile))
+	abs, err := filepath.Abs(outfile)
+	if err != nil {
+		return errors.Errorf("filepath.Abs(%q): %v", outfile, err)
+	}
+	pkg := path.Base(path.Dir(abs))
 	var cmdLineParts []string
 	// This has to stay in sync with flags
 	if optType != "Option" { // The default
@@ -75,7 +93,7 @@ package {{.Package}}
 	}
 	cmdLineParts = append(cmdLineParts, "--outfile="+outfile)
 	for _, fs := range flag.CommandLine.Args() {
-		cmdLineParts = append(cmdLineParts, "'"+fs+"'")
+		cmdLineParts = append(cmdLineParts, fmt.Sprintf("\"%s\"", removeQuotes(fs)))
 	}
 	cmdLine := strings.Join(cmdLineParts, " ")
 

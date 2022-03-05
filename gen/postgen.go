@@ -1,4 +1,4 @@
-package genopts
+package gen
 
 func postGenCleanup(goImportsBin, dir, f string) error {
 	if err := run(dir, goImportsBin, "-w", f); err != nil {

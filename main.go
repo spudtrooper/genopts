@@ -11,9 +11,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/spudtrooper/genopts/genopts"
+	"github.com/spudtrooper/genopts/gen"
+	genopts "github.com/spudtrooper/genopts/gen"
 	"github.com/spudtrooper/genopts/gitversion"
-	"github.com/spudtrooper/genopts/options"
 	"github.com/spudtrooper/goutil/check"
 	"github.com/spudtrooper/goutil/io"
 	"github.com/spudtrooper/goutil/or"
@@ -32,7 +32,7 @@ var (
 	excludeDirs    = flag.String("exclude_dirs", "", "comma-separated list of directory base names to exclude when --update is set")
 	config         = flag.String("config", "", "absolute location of config. If empty we'll look in $update_dir/.genopts")
 	writeConfig    = flag.Bool("write_config", false, "update the expected config file. This is used to set the config after setting explicit flags")
-	quiet          = flag.Bool("quiet", false, "quite logging")
+	batch          = flag.Bool("batch", false, "running in batch mode, this is added to commandlines when --update is set. Don't set this manually")
 )
 
 type Config struct {
@@ -62,7 +62,7 @@ func findConfig() (Config, error) {
 	if err := json.Unmarshal(b, &config); err != nil {
 		return Config{}, err
 	}
-	if !*quiet {
+	if !*batch {
 		log.Printf("using config from %s", configFile)
 	}
 	return config, nil
@@ -104,7 +104,7 @@ func realMain() error {
 			return err
 		}
 		log.Printf("wrote config to %s", configFile)
-	} else if !*quiet && cfg.Empty() && (*goimports != "" || *excludeDirs != "") {
+	} else if !*batch && cfg.Empty() && (*goimports != "" || *excludeDirs != "") {
 		expectedConfigFile := or.String(*config, path.Join(*updateDir, ".genopts"))
 		fmt.Printf("***\n")
 		fmt.Printf("*** To run with this configuration without passing explicit flags,\n")
@@ -151,9 +151,9 @@ func realMain() error {
 
 func genOpts(dir, goImportsBin string) error {
 	output, err := genopts.GenOpts(*optType, *implType, dir, goImportsBin, flag.Args(),
-		options.Prefix(*prefix),
-		options.PrefixOptsType(*prefixOptsType),
-		options.Outfile(*outfile))
+		gen.GenOptsPrefix(*prefix),
+		gen.GenOptsPrefixOptsType(*prefixOptsType),
+		gen.GenOptsOutfile(*outfile))
 	if err != nil {
 		return err
 	}

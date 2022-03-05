@@ -21,8 +21,6 @@ function test_filetoupdate() {
 	cat << EOF > $filetoupdate
 package some
 
-// genopts --prefix=FileToUpdate --outfile=some/filetoupdate.go 'foo' 'bar:int' 'baz:string'
-
 func Func() {
 	TakesOpts(Foo(true), Bar("bar"), Baz(1.0))
 }
@@ -30,6 +28,13 @@ func Func() {
 func TakesOpts(opts ...SomeOpts) {
 	// nothing
 }
+EOF
+	local optionsfiletoupdate=some/filetoupdateoptions.go
+	cat << EOF > $optionsfiletoupdate
+package some
+
+//go:generate genopts --prefix=FileToUpdate --outfile=some/filetoupdate.go 'foo' 'bar:int' 'baz:string'
+
 EOF
 	go run main.go --update_file $filetoupdate
 	local expectedfiletoupdate=$base/testdata/filetoupdate.go

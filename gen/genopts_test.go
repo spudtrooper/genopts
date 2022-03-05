@@ -1,4 +1,4 @@
-package genopts
+package gen
 
 import (
 	"bytes"
@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/andreyvit/diff"
-	"github.com/spudtrooper/genopts/options"
 )
 
 func TestGenOpts(t *testing.T) {
@@ -19,7 +18,7 @@ func TestGenOpts(t *testing.T) {
 		optType    string
 		implType   string
 		fieldSpecs []string
-		opts       []options.Option
+		opts       []GenOptsOption
 	}{
 		{
 			name:    "empty",
@@ -39,16 +38,16 @@ func TestGenOpts(t *testing.T) {
 			name:       "prefix",
 			optType:    "SomeOption",
 			fieldSpecs: []string{"foo", "bar:string", "baz:float64"},
-			opts: []options.Option{
-				options.Prefix("Prefix"),
+			opts: []GenOptsOption{
+				GenOptsPrefix("Prefix"),
 			},
 		},
 		{
 			name:       "prefixOptsType",
 			optType:    "SomeOption",
 			fieldSpecs: []string{"foo", "bar:string", "baz:float64"},
-			opts: []options.Option{
-				options.PrefixOptsType(true),
+			opts: []GenOptsOption{
+				GenOptsPrefixOptsType(true),
 			},
 		},
 	}
