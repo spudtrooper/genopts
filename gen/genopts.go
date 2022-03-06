@@ -50,10 +50,9 @@ func GenOpts(optType, implType string, dir, goImportsBin string, fieldDefs []str
 		if err != nil {
 			return "", errors.Errorf("os.Getwd: %v", err)
 		}
-		tailPwd := path.Base(pwd)
-		startOutfile := path.Base(path.Dir(o.Outfile()))
+
 		var outfile string
-		if tailPwd == startOutfile {
+		if tailPwd, startOutfile := path.Base(pwd), path.Base(path.Dir(o.Outfile())); tailPwd == startOutfile {
 			outfile = path.Base(o.Outfile())
 		} else {
 			outfile = o.Outfile()
