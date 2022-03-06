@@ -171,8 +171,11 @@ The benefits are:
 2.  Use the `--outfile` flag to write directly to the file. This file will contain the command line that generated the file as comments.
 3.  When you want to modify existing options, modify the commented command line in the file and update with:
 
-		% genopts --update
+    % go generate ./...
 
+    -or-
+
+		% genopts
 
 e.g. from above:
 
@@ -186,7 +189,11 @@ e.g. from above:
 
 3.  Update all relevant files in the current directory:
 
-		% genopts --update
+    % go generate ./...
+
+    -or-
+
+		% genopts
 
 4.  Repeat
 
