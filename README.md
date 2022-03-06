@@ -1,6 +1,6 @@
 # genopts
 
-A command line tool to generate *optional* parameters for Go functions.
+A go generator for *optional* parameters to functions.
 
 ## tl;dr
 
