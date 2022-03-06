@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"os"
 	"path"
 	"path/filepath"
 	"strings"
@@ -43,10 +44,24 @@ func GenOpts(optType, implType string, dir, goImportsBin string, fieldDefs []str
 		return "", err
 	}
 	if o.Outfile() != "" {
-		if err := outputResult(o.Outfile(), output, optType, originalImplType, o); err != nil {
+		// If the dirname of the outfile ends with the end of the pwd, then we are running in go generate mode
+		// In this case, we use the basename of the outfile.
+		pwd, err := os.Getwd()
+		if err != nil {
+			return "", errors.Errorf("os.Getwd: %v", err)
+		}
+		tailPwd := path.Base(pwd)
+		startOutfile := path.Base(path.Dir(o.Outfile()))
+		var outfile string
+		if tailPwd == startOutfile {
+			outfile = path.Base(o.Outfile())
+		} else {
+			outfile = o.Outfile()
+		}
+		if err := outputResult(outfile, output, optType, originalImplType, o); err != nil {
 			return "", err
 		}
-		if err := postGenCleanup(goImportsBin, dir, o.Outfile()); err != nil {
+		if err := postGenCleanup(goImportsBin, dir, outfile); err != nil {
 			return "", err
 		}
 		output = ""
@@ -67,7 +82,7 @@ func outputResult(outfile, output, optType, implType string, opts GenOptsOptions
 	const tmpl = `
 package {{.Package}}
 
-//go:generate genopts {{.CommandLine}}
+//go:` + `generate genopts {{.CommandLine}}
 
 {{.Output}}
 	`

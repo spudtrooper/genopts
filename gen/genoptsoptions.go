@@ -1,6 +1,6 @@
 package gen
 
-//go:generate genopts --opt_type=GenOptsOption --prefix=GenOpts --outfile=gen/genoptsoptions.go "prefixOptsType:bool" "prefix:string" "outfile:string" "batch:bool"
+//go:generate genopts --opt_type=GenOptsOption --prefix=GenOpts --outfile=genoptsoptions.go "prefixOptsType:bool" "prefix:string" "outfile:string" "batch:bool"
 
 type GenOptsOption func(*genOptsOptionImpl)
 

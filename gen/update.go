@@ -17,8 +17,8 @@ import (
 
 var (
 	updateDirBlacklist = map[string]bool{
-		"// genopts {{.CommandLine}}":            true,
-		"//go:generate genopts {{.CommandLine}}": true,
+		"// genopts {{.CommandLine}}":                 true,
+		"//go:" + "generate genopts {{.CommandLine}}": true,
 	}
 )
 
@@ -169,9 +169,9 @@ func extractCommandLine(f string) (string, error) {
 		return "", err
 	}
 	for _, line := range lines {
-		if (strings.HasPrefix(line, "// genopts") || strings.HasPrefix(line, "//go:generate genopts")) && !updateDirBlacklist[line] {
+		if (strings.HasPrefix(line, "// genopts") || strings.HasPrefix(line, "//go:"+"generate genopts")) && !updateDirBlacklist[line] {
 			cmdLine := strings.TrimSpace(strings.Replace(line, "// genopts", "", 1))
-			cmdLine = strings.TrimSpace(strings.Replace(cmdLine, "//go:generate genopts", "", 1))
+			cmdLine = strings.TrimSpace(strings.Replace(cmdLine, "//go:"+"generate genopts", "", 1))
 			return cmdLine, nil
 		}
 	}

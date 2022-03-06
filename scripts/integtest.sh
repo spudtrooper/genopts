@@ -58,21 +58,15 @@ EOF
 	return 0
 }
 
-function test_pipe() {
-	local driver=testdata/some/driver.go
-	touch $out
-	echo "package some" >> $out
-	echo >> $out
-	go run main.go --opt_type SomeOpts foo bar:string baz:float64 >> $out
-	go build $out $driver
-	echo "ok  	test_pipe"
-	return 0
+function test_go_generate() {
+  go generate -v ./...
+  go build main.go
+  rm main
 }
 
-
-test_update 			|| echo "no  	test_update"
+test_update 			    || echo "no  	test_update"
 test_filetoupdate 		|| echo "no  	test_filetoupdate"
 test_filetonotupdate	|| echo "no  	test_filetonotupdate"
-# test_pipe 				&& echo "no  	test_pipe"
+test_go_generate	    || echo "no  	test_go_generate"
 
 echo "ok  	github.com/spudtrooper/genopts/integtest"
