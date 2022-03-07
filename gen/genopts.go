@@ -93,7 +93,7 @@ package {{.Package}}
 	pkg := path.Base(path.Dir(abs))
 	var cmdLineParts []string
 	// This has to stay in sync with flags
-	if optType != "Option" { // The default
+	if optType != "Option" && optType != opts.Prefix()+"Option" { // The defaults
 		cmdLineParts = append(cmdLineParts, "--opt_type="+optType)
 	}
 	if implType != "" {

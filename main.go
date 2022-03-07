@@ -33,7 +33,6 @@ var (
 	config         = flag.String("config", "", "absolute location of config. If empty we'll look in $update_dir/.genopts")
 	writeConfig    = flag.Bool("write_config", false, "update the expected config file. This is used to set the config after setting explicit flags")
 	batch          = flag.Bool("batch", false, "running in batch mode, this is added to commandlines when --update is set. Don't set this manually")
-	goGenerate     = flag.Bool("go_generate", false, "running under go generate")
 )
 
 type Config struct {
