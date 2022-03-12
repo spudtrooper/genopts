@@ -93,6 +93,32 @@ func TestGenOpts(t *testing.T) {
 	}
 }
 
+func TestMakeGenOptsOptions(t *testing.T) {
+	{
+		opts := MakeGenOptsOptions(GenOptsBatch(true))
+		if want, got := true, opts.Batch(); want != got {
+			t.Errorf("MakeGenOptsOptions: want(%v) != got(%v)", want, got)
+		}
+	}
+	{
+		var boolFlag *bool
+		opts := MakeGenOptsOptions(GenOptsBatchFlag(boolFlag))
+
+		*boolFlag = true
+		if want, got := true, opts.Batch(); want != got {
+			t.Errorf("MakeGenOptsOptions: want(%v) != got(%v)", want, got)
+		}
+		*boolFlag = false
+		if want, got := false, opts.Batch(); want != got {
+			t.Errorf("MakeGenOptsOptions: want(%v) != got(%v)", want, got)
+		}
+		*boolFlag = true
+		if want, got := true, opts.Batch(); want != got {
+			t.Errorf("MakeGenOptsOptions: want(%v) != got(%v)", want, got)
+		}
+	}
+}
+
 func gofmt(contents, tmp string) (string, error) {
 	if err := ioutil.WriteFile(tmp, []byte(contents), 0755); err != nil {
 		return "", err

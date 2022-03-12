@@ -148,6 +148,11 @@ func {{.FunctionName}}({{.Field.Name}} {{.Field.Type}}) {{$optType}} {
 		opts.{{.Field.Name}} = {{.Field.Name}}
 	}
 }
+func {{.FunctionName}}Flag({{.Field.Name}} *{{.Field.Type}}) {{$optType}} {
+	return func(opts *{{$implType}}) {
+		opts.{{.Field.Name}} = *{{.Field.Name}}
+	}
+}
 {{end}}
 type {{.ImplType}} struct {
 {{range .Fields}}	{{.Name}} {{.Type}}

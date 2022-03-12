@@ -13,16 +13,31 @@ func PrefixFoo(foo bool) PrefixOption {
 		opts.foo = foo
 	}
 }
+func PrefixFooFlag(foo *bool) PrefixOption {
+	return func(opts *prefixOptionImpl) {
+		opts.foo = *foo
+	}
+}
 
 func PrefixBar(bar string) PrefixOption {
 	return func(opts *prefixOptionImpl) {
 		opts.bar = bar
 	}
 }
+func PrefixBarFlag(bar *string) PrefixOption {
+	return func(opts *prefixOptionImpl) {
+		opts.bar = *bar
+	}
+}
 
 func PrefixBaz(baz float64) PrefixOption {
 	return func(opts *prefixOptionImpl) {
 		opts.baz = baz
+	}
+}
+func PrefixBazFlag(baz *float64) PrefixOption {
+	return func(opts *prefixOptionImpl) {
+		opts.baz = *baz
 	}
 }
 

@@ -1,6 +1,6 @@
 package gen
 
-//go:generate genopts --opt_type=UpdateOption --prefix=Update --outfile=gen/updateoptions.go "threads:int"
+//go:generate genopts --prefix=Update --outfile=updateoptions.go "threads:int"
 
 type UpdateOption func(*updateOptionImpl)
 
@@ -11,6 +11,11 @@ type UpdateOptions interface {
 func UpdateThreads(threads int) UpdateOption {
 	return func(opts *updateOptionImpl) {
 		opts.threads = threads
+	}
+}
+func UpdateThreadsFlag(threads *int) UpdateOption {
+	return func(opts *updateOptionImpl) {
+		opts.threads = *threads
 	}
 }
 

@@ -1,6 +1,6 @@
 package gen
 
-//go:generate genopts --opt_type=GenOptsOption --prefix=GenOpts --outfile=gen/genoptsoptions.go "prefixOptsType:bool" "prefix:string" "outfile:string" "batch:bool"
+//go:generate genopts --prefix=GenOpts --outfile=genoptsoptions.go "prefixOptsType:bool" "prefix:string" "outfile:string" "batch:bool"
 
 type GenOptsOption func(*genOptsOptionImpl)
 
@@ -16,10 +16,20 @@ func GenOptsPrefixOptsType(prefixOptsType bool) GenOptsOption {
 		opts.prefixOptsType = prefixOptsType
 	}
 }
+func GenOptsPrefixOptsTypeFlag(prefixOptsType *bool) GenOptsOption {
+	return func(opts *genOptsOptionImpl) {
+		opts.prefixOptsType = *prefixOptsType
+	}
+}
 
 func GenOptsPrefix(prefix string) GenOptsOption {
 	return func(opts *genOptsOptionImpl) {
 		opts.prefix = prefix
+	}
+}
+func GenOptsPrefixFlag(prefix *string) GenOptsOption {
+	return func(opts *genOptsOptionImpl) {
+		opts.prefix = *prefix
 	}
 }
 
@@ -28,10 +38,20 @@ func GenOptsOutfile(outfile string) GenOptsOption {
 		opts.outfile = outfile
 	}
 }
+func GenOptsOutfileFlag(outfile *string) GenOptsOption {
+	return func(opts *genOptsOptionImpl) {
+		opts.outfile = *outfile
+	}
+}
 
 func GenOptsBatch(batch bool) GenOptsOption {
 	return func(opts *genOptsOptionImpl) {
 		opts.batch = batch
+	}
+}
+func GenOptsBatchFlag(batch *bool) GenOptsOption {
+	return func(opts *genOptsOptionImpl) {
+		opts.batch = *batch
 	}
 }
 

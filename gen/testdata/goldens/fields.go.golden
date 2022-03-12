@@ -13,16 +13,31 @@ func Foo(foo bool) SomeOption {
 		opts.foo = foo
 	}
 }
+func FooFlag(foo *bool) SomeOption {
+	return func(opts *someOptionImpl) {
+		opts.foo = *foo
+	}
+}
 
 func Bar(bar string) SomeOption {
 	return func(opts *someOptionImpl) {
 		opts.bar = bar
 	}
 }
+func BarFlag(bar *string) SomeOption {
+	return func(opts *someOptionImpl) {
+		opts.bar = *bar
+	}
+}
 
 func Baz(baz float64) SomeOption {
 	return func(opts *someOptionImpl) {
 		opts.baz = baz
+	}
+}
+func BazFlag(baz *float64) SomeOption {
+	return func(opts *someOptionImpl) {
+		opts.baz = *baz
 	}
 }
 
