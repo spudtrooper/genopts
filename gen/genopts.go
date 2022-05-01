@@ -28,6 +28,9 @@ func GenOpts(optType, implType string, dir, goImportsBin string, fieldDefs []str
 	if o.Prefix() != "" {
 		prefix = o.Prefix()
 		optType = prefix + "Option"
+	} else if o.Function() != "" {
+		prefix = o.Function()
+		optType = prefix + "Option"
 	} else if o.PrefixOptsType() {
 		prefix = optType
 	}
@@ -43,28 +46,34 @@ func GenOpts(optType, implType string, dir, goImportsBin string, fieldDefs []str
 	if err != nil {
 		return "", err
 	}
+
+	var outfile string
+	pwd, err := os.Getwd()
+	if err != nil {
+		return "", errors.Errorf("os.Getwd: %v", err)
+	}
+	log.Printf("have pwd: %s", pwd)
 	if o.Outfile() != "" {
 		// If the dirname of the outfile ends with the end of the pwd, then we are running in go generate mode
 		// In this case, we use the basename of the outfile.
-		pwd, err := os.Getwd()
-		if err != nil {
-			return "", errors.Errorf("os.Getwd: %v", err)
-		}
-
-		var outfile string
 		if tailPwd, startOutfile := path.Base(pwd), path.Base(path.Dir(o.Outfile())); tailPwd == startOutfile {
 			outfile = path.Base(o.Outfile())
 		} else {
 			outfile = o.Outfile()
 		}
-		if err := outputResult(outfile, output, optType, originalImplType, o); err != nil {
-			return "", err
-		}
-		if err := postGenCleanup(goImportsBin, dir, outfile); err != nil {
-			return "", err
-		}
-		output = ""
+	} else {
+		filename := strings.ToLower(prefix + "options.go")
+		outfile = path.Join(pwd, filename)
 	}
+
+	addCommandLine := !o.Nocommandline() && o.Function() == ""
+	if err := outputResult(outfile, output, optType, originalImplType, addCommandLine, o); err != nil {
+		return "", err
+	}
+	if err := postGenCleanup(goImportsBin, dir, outfile); err != nil {
+		return "", err
+	}
+	output = ""
 
 	return output, nil
 }
@@ -77,11 +86,14 @@ func removeQuotesSlice(ss []string) []string {
 	return res
 }
 
-func outputResult(outfile, output, optType, implType string, opts GenOptsOptions) error {
+func outputResult(outfile, output, optType, implType string, addCommandLine bool, opts GenOptsOptions) error {
 	const tmpl = `
+// DO NOT EDIT MANUALLY: Generated from https://github.com/spudtrooper/genopts
 package {{.Package}}
 
+{{if .AddCommandLine}}
 //go:` + `generate genopts {{.CommandLine}}
+{{end}}
 
 {{.Output}}
 	`
@@ -113,13 +125,15 @@ package {{.Package}}
 
 	var buf bytes.Buffer
 	if err := renderTemplate(&buf, tmpl, "outputResult", struct {
-		Package     string
-		CommandLine string
-		Output      string
+		Package        string
+		CommandLine    string
+		Output         string
+		AddCommandLine bool
 	}{
-		Package:     pkg,
-		CommandLine: cmdLine,
-		Output:      output,
+		Package:        pkg,
+		CommandLine:    cmdLine,
+		Output:         output,
+		AddCommandLine: addCommandLine,
 	}); err != nil {
 		return err
 	}

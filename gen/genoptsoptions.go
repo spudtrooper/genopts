@@ -1,14 +1,16 @@
 package gen
 
-//go:generate genopts --prefix=GenOpts --outfile=gen/genoptsoptions.go "prefixOptsType:bool" "prefix:string" "outfile:string" "batch:bool"
+//go:generate genopts --prefix=GenOpts --outfile=genoptsoptions.go "prefixOptsType:bool" "prefix:string" "function:string" "outfile:string" "batch:bool" "nocommandline"
 
 type GenOptsOption func(*genOptsOptionImpl)
 
 type GenOptsOptions interface {
 	PrefixOptsType() bool
 	Prefix() string
+	Function() string
 	Outfile() string
 	Batch() bool
+	Nocommandline() bool
 }
 
 func GenOptsPrefixOptsType(prefixOptsType bool) GenOptsOption {
@@ -30,6 +32,17 @@ func GenOptsPrefix(prefix string) GenOptsOption {
 func GenOptsPrefixFlag(prefix *string) GenOptsOption {
 	return func(opts *genOptsOptionImpl) {
 		opts.prefix = *prefix
+	}
+}
+
+func GenOptsFunction(function string) GenOptsOption {
+	return func(opts *genOptsOptionImpl) {
+		opts.function = function
+	}
+}
+func GenOptsFunctionFlag(function *string) GenOptsOption {
+	return func(opts *genOptsOptionImpl) {
+		opts.function = *function
 	}
 }
 
@@ -55,17 +68,32 @@ func GenOptsBatchFlag(batch *bool) GenOptsOption {
 	}
 }
 
+func GenOptsNocommandline(nocommandline bool) GenOptsOption {
+	return func(opts *genOptsOptionImpl) {
+		opts.nocommandline = nocommandline
+	}
+}
+func GenOptsNocommandlineFlag(nocommandline *bool) GenOptsOption {
+	return func(opts *genOptsOptionImpl) {
+		opts.nocommandline = *nocommandline
+	}
+}
+
 type genOptsOptionImpl struct {
 	prefixOptsType bool
 	prefix         string
+	function       string
 	outfile        string
 	batch          bool
+	nocommandline  bool
 }
 
 func (g *genOptsOptionImpl) PrefixOptsType() bool { return g.prefixOptsType }
 func (g *genOptsOptionImpl) Prefix() string       { return g.prefix }
+func (g *genOptsOptionImpl) Function() string     { return g.function }
 func (g *genOptsOptionImpl) Outfile() string      { return g.outfile }
 func (g *genOptsOptionImpl) Batch() bool          { return g.batch }
+func (g *genOptsOptionImpl) Nocommandline() bool  { return g.nocommandline }
 
 func makeGenOptsOptionImpl(opts ...GenOptsOption) *genOptsOptionImpl {
 	res := &genOptsOptionImpl{}

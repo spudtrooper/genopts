@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/spudtrooper/genopts/gen"
 	genopts "github.com/spudtrooper/genopts/gen"
 	"github.com/spudtrooper/genopts/gitversion"
@@ -24,6 +25,8 @@ var (
 	implType       = flag.String("impl_type", "", "The name of the implementation type; if empty this is derived from --opts_type")
 	prefixOptsType = flag.Bool("prefix_opts_type", false, "Prefix each option function with the --opts_type; --prefix takes precendence over --prefix_opts_type")
 	prefix         = flag.String("prefix", "", "Prefix each option with this string; --prefix takes precendence over --prefix_opts_type")
+	nocommandLine  = flag.Bool("nocommandline", false, "Don't output the command line in the options file")
+	function       = flag.String("function", "", "The same as --prefix <function> --nocommandline. When you add a go:generate declaration above a function, use this instead of prefix")
 	outfile        = flag.String("outfile", "", "Output result to this file in addition to printing to STDOUT")
 	update         = flag.Bool("update", false, "update all files recurisvely in the current directory or directory specified by --update_dir")
 	updateDir      = flag.String("update_dir", ".", "directory for update")
@@ -33,6 +36,7 @@ var (
 	config         = flag.String("config", "", "absolute location of config. If empty we'll look in $update_dir/.genopts")
 	writeConfig    = flag.Bool("write_config", false, "update the expected config file. This is used to set the config after setting explicit flags")
 	batch          = flag.Bool("batch", false, "running in batch mode, this is added to commandlines when --update is set. Don't set this manually")
+	logfile        = flag.String("logfile", "", "file to which we log")
 )
 
 type Config struct {
@@ -69,6 +73,25 @@ func findConfig() (Config, error) {
 }
 
 func realMain() error {
+	if *logfile != "" {
+		f, err := os.OpenFile(*logfile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		if err != nil {
+			return errors.Errorf("error opening logfile: %s: %v", *logfile, err)
+		}
+		defer f.Close()
+
+		log.SetOutput(f)
+		log.Println("Logging to %s", *logfile)
+		pwd, err := os.Getwd()
+		if err != nil {
+			return errors.Errorf("os.Getwd: %v", err)
+		}
+		log.Printf("Invoked from %s with args:", pwd)
+		for i, arg := range os.Args {
+			log.Printf(" [%d] %s", i, arg)
+		}
+	}
+
 	if gitversion.CheckVersionFlag() {
 		return nil
 	}
@@ -152,6 +175,8 @@ func realMain() error {
 func genOpts(dir, goImportsBin string) error {
 	output, err := genopts.GenOpts(*optType, *implType, dir, goImportsBin, flag.Args(),
 		gen.GenOptsPrefix(*prefix),
+		gen.GenOptsFunction(*function),
+		gen.GenOptsNocommandline(*nocommandLine),
 		gen.GenOptsPrefixOptsType(*prefixOptsType),
 		gen.GenOptsOutfile(*outfile),
 	)
