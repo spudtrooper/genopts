@@ -1,3 +1,4 @@
+// DO NOT EDIT MANUALLY: Generated from https://github.com/spudtrooper/genopts
 package gen
 
 //go:generate genopts --prefix=Update --outfile=updateoptions.go "threads:int"
