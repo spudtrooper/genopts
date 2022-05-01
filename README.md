@@ -20,16 +20,17 @@ func Usage() {
 }
 ```
 
-you can leave this in a file:
+you can leave this in a file to generate the options in that file:
 
 ```bash
 //go:generate genopts --prefix Foo 'bar:bool' 'baz:int' 'boo:string'
 ```
 
-or run
+or use `--function` to generate the options in another file:
 
 ```bash
-genopts --prefix Foo 'bar:bool' 'baz:int' 'boo:string'
+//go:generate genopts --function Foo 'bar:bool' 'baz:int' 'boo:string'
+func Foo(...) {}
 ```
 
 and generate some coode like the
