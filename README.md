@@ -44,6 +44,7 @@ so you could have cleaner and easier-to-maintain code like:
 ```go
 import "github.com/spudtrooper/goutil/or"
 
+//go:generate genopts --function Foo 'bar:bool' 'baz:int' 'boo:string'
 func Foo(requiredString string bool, fOpts...FooOption) { 
 	opts := MakeFooOptions(fOpts...)
 
@@ -56,11 +57,11 @@ func Foo(requiredString string bool, fOpts...FooOption) {
 
 func Usage() {
 	...
-	Foo("some required 1", FooBar(true))
+	Foo("some optional 1", FooBar(true))
 	...
-	Foo("some required 2", FooBaz(1))
+	Foo("some optional 2", FooBaz(1))
 	...
-	Foo("some required 3", FooBoo("optional string"))
+	Foo("some optional 3", FooBoo("optional string"))
 	...
 }
 ```
