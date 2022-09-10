@@ -20,17 +20,18 @@ func Usage() {
 }
 ```
 
-you can leave this in a file to generate the options in that file:
 
-```bash
-//go:generate genopts --prefix Foo 'bar:bool' 'baz:int' 'boo:string'
-```
-
-or use `--function` to generate the options in another file:
+you can use `--function` to generate the options in another file:
 
 ```bash
 //go:generate genopts --function Foo 'bar:bool' 'baz:int' 'boo:string'
 func Foo(...) {}
+```
+
+or leave this in a file to generate the options in that file:
+
+```bash
+//go:generate genopts --prefix Foo 'bar:bool' 'baz:int' 'boo:string'
 ```
 
 and generate some coode like the
@@ -57,11 +58,11 @@ func Foo(requiredString string bool, fOpts...FooOption) {
 
 func Usage() {
 	...
-	Foo("some optional 1", FooBar(true))
+	Foo("some required 1", FooBar(true))
 	...
-	Foo("some optional 2", FooBaz(1))
+	Foo("some required 2", FooBaz(1))
 	...
-	Foo("some optional 3", FooBoo("optional string"))
+	Foo("some required 3", FooBoo("optional string"))
 	...
 }
 ```
