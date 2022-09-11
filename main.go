@@ -176,7 +176,7 @@ func genOpts(dir, goImportsBin string) error {
 	output, err := genopts.GenOpts(*optType, *implType, dir, goImportsBin, flag.Args(),
 		gen.GenOptsPrefix(*prefix),
 		gen.GenOptsFunction(*function),
-		gen.GenOptsNocommandline(*no)
+		gen.GenOptsNocommandline(*nocommandLine),
 		gen.GenOptsPrefixOptsType(*prefixOptsType),
 		gen.GenOptsOutfile(*outfile),
 	)

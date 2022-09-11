@@ -159,21 +159,25 @@ type {{.OptType}}s interface {
 {{range .Functions}}
 func {{.FunctionName}}({{.Field.Name}} {{.Field.Type}}) {{$optType}} {
 	return func(opts *{{$implType}}) {
+		opts.has_{{.Field.Name}} = true
 		opts.{{.Field.Name}} = {{.Field.Name}}
 	}
 }
 func {{.FunctionName}}Flag({{.Field.Name}} *{{.Field.Type}}) {{$optType}} {
 	return func(opts *{{$implType}}) {
+		opts.has_{{.Field.Name}} = true
 		opts.{{.Field.Name}} = *{{.Field.Name}}
 	}
 }
 {{end}}
 type {{.ImplType}} struct {
 {{range .Fields}}	{{.Name}} {{.Type}}
+has_{{.Name}} bool
 {{end}}
 }
 {{range .InterfaceFunctions}}
-func ({{.ObjectName}} *{{$implType}}) {{.FunctionName}}() {{.Field.Type}} { return {{.ObjectName}}.{{.Field.Name}} }{{end}}
+func ({{.ObjectName}} *{{$implType}}) {{.FunctionName}}() {{.Field.Type}} { return {{.ObjectName}}.{{.Field.Name}} }
+func ({{.ObjectName}} *{{$implType}}) Has{{.FunctionName}}() bool { return {{.ObjectName}}.has_{{.Field.Name}} }{{end}}
 
 func make{{.ImplTypeCaps}}(opts ...{{.OptType}}) *{{.ImplType}} {
 	res := &{{.ImplType}}{}
