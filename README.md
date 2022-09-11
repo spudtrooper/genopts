@@ -20,26 +20,13 @@ func Usage() {
 }
 ```
 
-
-you can use `--function` to generate the options in another file:
+you can declaratively generate code to handle these optional parameters with `//go:generate`:
 
 ```bash
 //go:generate genopts --function Foo 'bar:bool' 'baz:int' 'boo:string'
 func Foo(...) {}
 ```
 
-or leave this in a file to generate the options in that file:
-
-```bash
-//go:generate genopts --prefix Foo 'bar:bool' 'baz:int' 'boo:string'
-```
-
-and generate some coode like the
-
-*  `FooOption` and `FooOptions` interfaces,
-*  `MakeFooOptions` constructor, and 
-*  `FooBar(bool)`, `FooBaz(int)` & `FooBoo(string)` wrappers
-  
 so you could have cleaner and easier-to-maintain code like:
 
 ```go
