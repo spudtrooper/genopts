@@ -7,11 +7,17 @@ type GenOptsOption func(*genOptsOptionImpl)
 
 type GenOptsOptions interface {
 	PrefixOptsType() bool
+	HasPrefixOptsType() bool
 	Prefix() string
+	HasPrefix() bool
 	Function() string
+	HasFunction() bool
 	Outfile() string
+	HasOutfile() bool
 	Batch() bool
+	HasBatch() bool
 	Nocommandline() bool
+	HasNocommandline() bool
 }
 
 func GenOptsPrefixOptsType(prefixOptsType bool) GenOptsOption {
@@ -22,6 +28,9 @@ func GenOptsPrefixOptsType(prefixOptsType bool) GenOptsOption {
 }
 func GenOptsPrefixOptsTypeFlag(prefixOptsType *bool) GenOptsOption {
 	return func(opts *genOptsOptionImpl) {
+		if prefixOptsType == nil {
+			return
+		}
 		opts.has_prefixOptsType = true
 		opts.prefixOptsType = *prefixOptsType
 	}
@@ -35,6 +44,9 @@ func GenOptsPrefix(prefix string) GenOptsOption {
 }
 func GenOptsPrefixFlag(prefix *string) GenOptsOption {
 	return func(opts *genOptsOptionImpl) {
+		if prefix == nil {
+			return
+		}
 		opts.has_prefix = true
 		opts.prefix = *prefix
 	}
@@ -48,6 +60,9 @@ func GenOptsFunction(function string) GenOptsOption {
 }
 func GenOptsFunctionFlag(function *string) GenOptsOption {
 	return func(opts *genOptsOptionImpl) {
+		if function == nil {
+			return
+		}
 		opts.has_function = true
 		opts.function = *function
 	}
@@ -61,6 +76,9 @@ func GenOptsOutfile(outfile string) GenOptsOption {
 }
 func GenOptsOutfileFlag(outfile *string) GenOptsOption {
 	return func(opts *genOptsOptionImpl) {
+		if outfile == nil {
+			return
+		}
 		opts.has_outfile = true
 		opts.outfile = *outfile
 	}
@@ -74,6 +92,9 @@ func GenOptsBatch(batch bool) GenOptsOption {
 }
 func GenOptsBatchFlag(batch *bool) GenOptsOption {
 	return func(opts *genOptsOptionImpl) {
+		if batch == nil {
+			return
+		}
 		opts.has_batch = true
 		opts.batch = *batch
 	}
@@ -87,6 +108,9 @@ func GenOptsNocommandline(nocommandline bool) GenOptsOption {
 }
 func GenOptsNocommandlineFlag(nocommandline *bool) GenOptsOption {
 	return func(opts *genOptsOptionImpl) {
+		if nocommandline == nil {
+			return
+		}
 		opts.has_nocommandline = true
 		opts.nocommandline = *nocommandline
 	}

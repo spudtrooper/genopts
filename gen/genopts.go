@@ -153,8 +153,9 @@ func genOpts(optType, implType string, fieldDefs []string, functionPrefix string
 type {{.OptType}} func(*{{.ImplType}})
 
 type {{.OptType}}s interface {
-{{range .InterfaceFunctions}}	{{.FunctionName}}() {{.Field.Type}}
-{{end}}
+{{range .InterfaceFunctions}}	
+{{.FunctionName}}() {{.Field.Type}}
+Has{{.FunctionName}}() bool{{end}}
 }
 {{range .Functions}}
 func {{.FunctionName}}({{.Field.Name}} {{.Field.Type}}) {{$optType}} {
@@ -165,6 +166,9 @@ func {{.FunctionName}}({{.Field.Name}} {{.Field.Type}}) {{$optType}} {
 }
 func {{.FunctionName}}Flag({{.Field.Name}} *{{.Field.Type}}) {{$optType}} {
 	return func(opts *{{$implType}}) {
+		if {{.Field.Name}} == nil {
+			return
+		}
 		opts.has_{{.Field.Name}} = true
 		opts.{{.Field.Name}} = *{{.Field.Name}}
 	}

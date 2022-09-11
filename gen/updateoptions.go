@@ -7,6 +7,7 @@ type UpdateOption func(*updateOptionImpl)
 
 type UpdateOptions interface {
 	Threads() int
+	HasThreads() bool
 }
 
 func UpdateThreads(threads int) UpdateOption {
@@ -17,6 +18,9 @@ func UpdateThreads(threads int) UpdateOption {
 }
 func UpdateThreadsFlag(threads *int) UpdateOption {
 	return func(opts *updateOptionImpl) {
+		if threads == nil {
+			return
+		}
 		opts.has_threads = true
 		opts.threads = *threads
 	}

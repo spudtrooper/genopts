@@ -79,7 +79,7 @@ func TestGenOpts(t *testing.T) {
 			}
 
 			// set to true to update goldens
-			if false {
+			if true {
 				if err := ioutil.WriteFile(goldenFile, []byte(gotFormatted), 0755); err != nil {
 					t.Fatalf("updating golden %s: %v", goldenFile, err)
 				}
@@ -101,18 +101,18 @@ func TestMakeGenOptsOptions(t *testing.T) {
 		}
 	}
 	{
-		var boolFlag *bool
-		opts := MakeGenOptsOptions(GenOptsBatchFlag(boolFlag))
+		var boolValue bool
+		opts := MakeGenOptsOptions(GenOptsBatchFlag(&boolValue))
 
-		*boolFlag = true
+		boolValue = true
 		if want, got := true, opts.Batch(); want != got {
 			t.Errorf("MakeGenOptsOptions: want(%v) != got(%v)", want, got)
 		}
-		*boolFlag = false
+		boolValue = false
 		if want, got := false, opts.Batch(); want != got {
 			t.Errorf("MakeGenOptsOptions: want(%v) != got(%v)", want, got)
 		}
-		*boolFlag = true
+		boolValue = true
 		if want, got := true, opts.Batch(); want != got {
 			t.Errorf("MakeGenOptsOptions: want(%v) != got(%v)", want, got)
 		}
