@@ -38,7 +38,7 @@ func Usage() {
 
 you can declaratively generate code to handle these optional parameters with `//go:generate`:
 
-```bash
+```go
 //go:generate genopts --function Foo 'bar:bool' 'baz:int' 'boo:string'
 func Foo(...) {}
 ```
