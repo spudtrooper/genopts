@@ -7,7 +7,23 @@ A go generator for *optional* parameters to functions.
 Instead of having functions with explicit *optional* parameters like:
 
 ```go
-func Foo(requiredString string, optBar bool, optBaz int, optBoo string) { ... }
+func Foo(requiredString string, optBar bool, optBaz int, optBoo string) {
+  if optBar == false {
+    ...
+  } else {
+    ...
+  }
+  if optBaz == 0 {
+    ...
+  } else {
+    ...
+  }
+  if optBoo == "" {
+    ...
+  } else {
+    ...
+  }
+}
 
 func Usage() {
 	...
