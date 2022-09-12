@@ -86,4 +86,4 @@ export PATH=$PATH:~/go/bin
 
 ### Details 
 
-See [details]([TODO](https://github.com/spudtrooper/genopts/blob/main/details.md)).
+See [details](https://github.com/spudtrooper/genopts/blob/main/details.md).
