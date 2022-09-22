@@ -70,6 +70,8 @@ func Usage() {
 }
 ```
 
+See some [real examples](https://github.com/search?q=%22go%3Agenerate+genopts%22&type=code).
+
 ## Installation
 
 Get it:
