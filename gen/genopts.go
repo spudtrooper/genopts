@@ -78,7 +78,6 @@ func GenOpts(optType, implType string, dir, goImportsBin string, fieldDefs []str
 	if err != nil {
 		return "", errors.Errorf("os.Getwd: %v", err)
 	}
-	log.Printf("have pwd: %s", pwd)
 	if opts.Outfile() != "" {
 		// If the dirname of the outfile ends with the end of the pwd, then we are running in go generate mode
 		// In this case, we use the basename of the outfile.
