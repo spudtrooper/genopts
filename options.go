@@ -2,7 +2,7 @@
 package genopts
 
 
-//go:generate genopts --outfile=options.go "gen/genopts.go" "gen/genopts_test.go" "gen/genoptsoptions.go" "gen/postgen.go" "gen/run.go" "gen/update.go" "gen/updateoptions.go"
+//go:generate genopts --required  --outfile=options.go "gen/genopts.go" "gen/genopts_test.go" "gen/genoptsoptions.go" "gen/postgen.go" "gen/run.go" "gen/update.go" "gen/updateoptions.go"
 
 
 
@@ -171,6 +171,8 @@ func (o *optionImpl) Gen/update.go() bool { return o.gen/update.go }
 func (o *optionImpl) HasGen/update.go() bool { return o.has_gen/update.go }
 func (o *optionImpl) Gen/updateoptions.go() bool { return o.gen/updateoptions.go }
 func (o *optionImpl) HasGen/updateoptions.go() bool { return o.has_gen/updateoptions.go }
+
+
 
 func makeOptionImpl(opts ...Option) *optionImpl {
 	res := &optionImpl{}

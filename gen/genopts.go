@@ -14,24 +14,29 @@ import (
 	"text/template"
 	"unicode"
 
+	"github.com/iancoleman/strcase"
 	"github.com/pkg/errors"
 )
 
-func GenOpts(optType, implType string, dir, goImportsBin string, fieldDefs []string, opts ...GenOptsOption) (string, error) {
+type reqField struct {
+	name, typ string
+}
+
+func GenOpts(optType, implType string, dir, goImportsBin string, fieldDefs []string, optss ...GenOptsOption) (string, error) {
 	dir = removeQuotes(dir)
 	goImportsBin = removeQuotes(goImportsBin)
 	fieldDefs = removeQuotesSlice(fieldDefs)
 
-	o := MakeGenOptsOptions(opts...)
+	opts := MakeGenOptsOptions(optss...)
 	originalImplType := implType
 	var prefix string
-	if o.Prefix() != "" {
-		prefix = o.Prefix()
+	if opts.Prefix() != "" {
+		prefix = opts.Prefix()
 		optType = prefix + "Option"
-	} else if o.Function() != "" {
-		prefix = o.Function()
+	} else if opts.Function() != "" {
+		prefix = opts.Function()
 		optType = prefix + "Option"
-	} else if o.PrefixOptsType() {
+	} else if opts.PrefixOptsType() {
 		prefix = optType
 	}
 	if optType == "" {
@@ -42,7 +47,28 @@ func GenOpts(optType, implType string, dir, goImportsBin string, fieldDefs []str
 		s[0] = unicode.ToLower(s[0])
 		implType = string(s) + "Impl"
 	}
-	output, err := genOpts(optType, implType, fieldDefs, prefix)
+
+	var reqFields []reqField
+	for _, s := range strings.Split(opts.RequiredFields(), ",") {
+		if s == "" {
+			continue
+		}
+		parts := strings.Split(s, ":")
+		if len(parts) != 2 {
+			parts = strings.Split(s, " ")
+		}
+		if len(parts) != 2 {
+			return "", errors.Errorf("invalid required field %v in %q",
+				parts, opts.RequiredFields())
+		}
+		reqFields = append(reqFields, reqField{
+			name: parts[0],
+			typ:  parts[1],
+		})
+	}
+
+	output, err := genOutput(
+		optType, implType, fieldDefs, prefix, opts.GenerateParamsStruct(), reqFields)
 	if err != nil {
 		return "", err
 	}
@@ -53,21 +79,21 @@ func GenOpts(optType, implType string, dir, goImportsBin string, fieldDefs []str
 		return "", errors.Errorf("os.Getwd: %v", err)
 	}
 	log.Printf("have pwd: %s", pwd)
-	if o.Outfile() != "" {
+	if opts.Outfile() != "" {
 		// If the dirname of the outfile ends with the end of the pwd, then we are running in go generate mode
 		// In this case, we use the basename of the outfile.
-		if tailPwd, startOutfile := path.Base(pwd), path.Base(path.Dir(o.Outfile())); tailPwd == startOutfile {
-			outfile = path.Base(o.Outfile())
+		if tailPwd, startOutfile := path.Base(pwd), path.Base(path.Dir(opts.Outfile())); tailPwd == startOutfile {
+			outfile = path.Base(opts.Outfile())
 		} else {
-			outfile = o.Outfile()
+			outfile = opts.Outfile()
 		}
 	} else {
 		filename := strings.ToLower(prefix + "options.go")
 		outfile = path.Join(pwd, filename)
 	}
 
-	addCommandLine := !o.Nocommandline() && o.Function() == ""
-	if err := outputResult(outfile, output, optType, originalImplType, addCommandLine, o); err != nil {
+	addCommandLine := !opts.Nocommandline() && opts.Function() == ""
+	if err := outputResult(outfile, output, optType, originalImplType, addCommandLine, opts); err != nil {
 		return "", err
 	}
 	if err := postGenCleanup(goImportsBin, dir, outfile); err != nil {
@@ -117,6 +143,12 @@ package {{.Package}}
 	if opts.PrefixOptsType() {
 		cmdLineParts = append(cmdLineParts, "--prefix_opts_type")
 	}
+	if opts.HasRequiredFields() && opts.RequiredFields() != "" {
+		cmdLineParts = append(cmdLineParts, "--required", fmt.Sprintf("%q", opts.RequiredFields()))
+	}
+	if opts.GenerateParamsStruct() {
+		cmdLineParts = append(cmdLineParts, "--params")
+	}
 	cmdLineParts = append(cmdLineParts, "--outfile="+outfile)
 	for _, fs := range flag.CommandLine.Args() {
 		cmdLineParts = append(cmdLineParts, fmt.Sprintf("\"%s\"", removeQuotes(fs)))
@@ -146,7 +178,7 @@ package {{.Package}}
 	return nil
 }
 
-func genOpts(optType, implType string, fieldDefs []string, functionPrefix string) (string, error) {
+func genOutput(optType, implType string, fieldDefs []string, functionPrefix string, genParamsStruct bool, reqFields []reqField) (string, error) {
 	const tmpl = `
 {{$optType := .OptType}}
 {{$implType := .ImplType}}
@@ -183,6 +215,13 @@ has_{{.Name}} bool
 func ({{.ObjectName}} *{{$implType}}) {{.FunctionName}}() {{.Field.Type}} { return {{.ObjectName}}.{{.Field.Name}} }
 func ({{.ObjectName}} *{{$implType}}) Has{{.FunctionName}}() bool { return {{.ObjectName}}.has_{{.Field.Name}} }{{end}}
 
+{{if .GenParamsStruct}}
+type  {{.ParamsStructName}} struct {
+	{{range .RequiredFields}}{{.Name}} {{.Type}}{{if .Required}}` + "`" + `json:"{{.SnakeName}}" required:"true"` + "`" + `{{else}}` + "`" + `json:"{{.SnakeName}}"` + "`" + `{{end}}
+	{{end}}
+}
+{{end}}
+
 func make{{.ImplTypeCaps}}(opts ...{{.OptType}}) *{{.ImplType}} {
 	res := &{{.ImplType}}{}
 	for _, opt := range opts {
@@ -214,6 +253,10 @@ func Make{{.OptType}}s(opts ...{{.OptType}}) {{.OptType}}s {
 		return string(s)
 	}
 
+	snake := func(s string) string {
+		return strcase.ToSnake(s)
+	}
+
 	var fields []field
 	for _, f := range fieldDefs {
 		parts := strings.Split(f, ":")
@@ -226,6 +269,27 @@ func Make{{.OptType}}s(opts ...{{.OptType}}) {{.OptType}}s {
 		fields = append(fields, field{
 			Name: name,
 			Type: typ,
+		})
+	}
+
+	type requiredField struct {
+		Name, Type, SnakeName string
+		Required              bool
+	}
+	var requiredFields []requiredField
+	for _, f := range reqFields {
+		requiredFields = append(requiredFields, requiredField{
+			Name:      title(f.name),
+			SnakeName: snake(f.name),
+			Type:      f.typ,
+			Required:  true,
+		})
+	}
+	for _, f := range fields {
+		requiredFields = append(requiredFields, requiredField{
+			Name:      title(f.Name),
+			SnakeName: snake(f.Name),
+			Type:      f.Type,
 		})
 	}
 
@@ -247,6 +311,8 @@ func Make{{.OptType}}s(opts ...{{.OptType}}) {{.OptType}}s {
 		})
 	}
 
+	paramsStructName := title(strings.Replace(optType, "Option", "", 1)) + "Params"
+
 	var buf bytes.Buffer
 	if err := renderTemplate(&buf, tmpl, "genOpts", struct {
 		OptType            string
@@ -255,6 +321,9 @@ func Make{{.OptType}}s(opts ...{{.OptType}}) {{.OptType}}s {
 		Functions          []function
 		InterfaceFunctions []interfaceFunction
 		Fields             []field
+		GenParamsStruct    bool
+		ParamsStructName   string
+		RequiredFields     []requiredField
 	}{
 		OptType:            optType,
 		ImplType:           implType,
@@ -262,6 +331,9 @@ func Make{{.OptType}}s(opts ...{{.OptType}}) {{.OptType}}s {
 		Functions:          functions,
 		InterfaceFunctions: interfaceFunctions,
 		Fields:             fields,
+		GenParamsStruct:    genParamsStruct,
+		ParamsStructName:   paramsStructName,
+		RequiredFields:     requiredFields,
 	}); err != nil {
 		return "", err
 	}
