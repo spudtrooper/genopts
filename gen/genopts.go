@@ -181,6 +181,8 @@ func genOutput(optType, implType string, fieldDefs []string, functionPrefix stri
 	const tmpl = `
 {{$optType := .OptType}}
 {{$implType := .ImplType}}
+{{$functionPrefix := .FunctionPrefix}}
+
 type {{.OptType}} func(*{{.ImplType}})
 
 type {{.OptType}}s interface {
@@ -218,6 +220,16 @@ func ({{.ObjectName}} *{{$implType}}) Has{{.FunctionName}}() bool { return {{.Ob
 type  {{.ParamsStructName}} struct {
 	{{range .RequiredFields}}{{.Name}} {{.Type}}{{if .Required}}` + "`" + `json:"{{.SnakeName}}" required:"true"` + "`" + `{{else}}` + "`" + `json:"{{.SnakeName}}"` + "`" + `{{end}}
 	{{end}}
+}
+
+func (o {{.ParamsStructName}}) Options() []{{.OptType}} {
+	return []{{.OptType}}{
+		{{- range .RequiredFields}}
+			{{- if not .Required}}
+				{{$functionPrefix}}{{.Name}}(o.{{.Name}}),
+			{{- end}}
+		{{- end}}
+	}	
 }
 {{end}}
 
@@ -323,6 +335,7 @@ func Make{{.OptType}}s(opts ...{{.OptType}}) {{.OptType}}s {
 		GenParamsStruct    bool
 		ParamsStructName   string
 		RequiredFields     []requiredField
+		FunctionPrefix     string
 	}{
 		OptType:            optType,
 		ImplType:           implType,
@@ -333,6 +346,7 @@ func Make{{.OptType}}s(opts ...{{.OptType}}) {{.OptType}}s {
 		GenParamsStruct:    genParamsStruct,
 		ParamsStructName:   paramsStructName,
 		RequiredFields:     requiredFields,
+		FunctionPrefix:     functionPrefix,
 	}); err != nil {
 		return "", err
 	}
