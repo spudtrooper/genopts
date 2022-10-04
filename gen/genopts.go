@@ -199,9 +199,9 @@ func {{.FunctionName}}({{.Field.Name}} {{.Field.Type}}) {{$optType}} {
 }
 func {{.FunctionName}}Flag({{.Field.Name}} *{{.Field.Type}}) {{$optType}} {
 	return func(opts *{{$implType}}) {
-		if {{.Field.Name}} == nil {
-			return
-		}
+		// if {{.Field.Name}} == nil {
+		// 	return
+		// }
 		opts.has_{{.Field.Name}} = true
 		opts.{{.Field.Name}} = *{{.Field.Name}}
 	}
@@ -259,6 +259,9 @@ func Make{{.OptType}}s(opts ...{{.OptType}}) {{.OptType}}s {
 	}
 
 	title := func(str string) string {
+		if str == "" {
+			return ""
+		}
 		s := []rune(str)
 		s[0] = unicode.ToUpper(s[0])
 		return string(s)

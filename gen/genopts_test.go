@@ -79,7 +79,7 @@ func TestGenOpts(t *testing.T) {
 			}
 
 			// set to true to update goldens
-			if true {
+			if false {
 				if err := ioutil.WriteFile(goldenFile, []byte(gotFormatted), 0755); err != nil {
 					t.Fatalf("updating golden %s: %v", goldenFile, err)
 				}

@@ -1,3 +1,3 @@
 #!/bin/sh
 
-rm -rf some
+rm -rf some options.go gen/someoptionoptions.go gen/prefixoptions.go

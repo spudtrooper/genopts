@@ -1,7 +1,7 @@
 // DO NOT EDIT MANUALLY: Generated from https://github.com/spudtrooper/genopts
 package gen
 
-//go:generate genopts --prefix=GenOpts --outfile=genoptsoptions.go "prefixOptsType:bool" "prefix:string" "function:string" "outfile:string" "batch:bool" "nocommandline" "requiredFields:string" "generateParamsStruct"
+//go:generate genopts --prefix=GenOpts --outfile=gen/genoptsoptions.go "prefixOptsType:bool" "prefix:string" "function:string" "outfile:string" "batch:bool" "nocommandline" "requiredFields:string" "generateParamsStruct"
 
 type GenOptsOption func(*genOptsOptionImpl)
 
@@ -32,9 +32,9 @@ func GenOptsPrefixOptsType(prefixOptsType bool) GenOptsOption {
 }
 func GenOptsPrefixOptsTypeFlag(prefixOptsType *bool) GenOptsOption {
 	return func(opts *genOptsOptionImpl) {
-		if prefixOptsType == nil {
-			return
-		}
+		// if prefixOptsType == nil {
+		// 	return
+		// }
 		opts.has_prefixOptsType = true
 		opts.prefixOptsType = *prefixOptsType
 	}
@@ -48,9 +48,9 @@ func GenOptsPrefix(prefix string) GenOptsOption {
 }
 func GenOptsPrefixFlag(prefix *string) GenOptsOption {
 	return func(opts *genOptsOptionImpl) {
-		if prefix == nil {
-			return
-		}
+		// if prefix == nil {
+		// 	return
+		// }
 		opts.has_prefix = true
 		opts.prefix = *prefix
 	}
@@ -64,9 +64,9 @@ func GenOptsFunction(function string) GenOptsOption {
 }
 func GenOptsFunctionFlag(function *string) GenOptsOption {
 	return func(opts *genOptsOptionImpl) {
-		if function == nil {
-			return
-		}
+		// if function == nil {
+		// 	return
+		// }
 		opts.has_function = true
 		opts.function = *function
 	}
@@ -80,9 +80,9 @@ func GenOptsOutfile(outfile string) GenOptsOption {
 }
 func GenOptsOutfileFlag(outfile *string) GenOptsOption {
 	return func(opts *genOptsOptionImpl) {
-		if outfile == nil {
-			return
-		}
+		// if outfile == nil {
+		// 	return
+		// }
 		opts.has_outfile = true
 		opts.outfile = *outfile
 	}
@@ -96,9 +96,9 @@ func GenOptsBatch(batch bool) GenOptsOption {
 }
 func GenOptsBatchFlag(batch *bool) GenOptsOption {
 	return func(opts *genOptsOptionImpl) {
-		if batch == nil {
-			return
-		}
+		// if batch == nil {
+		// 	return
+		// }
 		opts.has_batch = true
 		opts.batch = *batch
 	}
@@ -112,9 +112,9 @@ func GenOptsNocommandline(nocommandline bool) GenOptsOption {
 }
 func GenOptsNocommandlineFlag(nocommandline *bool) GenOptsOption {
 	return func(opts *genOptsOptionImpl) {
-		if nocommandline == nil {
-			return
-		}
+		// if nocommandline == nil {
+		// 	return
+		// }
 		opts.has_nocommandline = true
 		opts.nocommandline = *nocommandline
 	}
@@ -128,9 +128,9 @@ func GenOptsRequiredFields(requiredFields string) GenOptsOption {
 }
 func GenOptsRequiredFieldsFlag(requiredFields *string) GenOptsOption {
 	return func(opts *genOptsOptionImpl) {
-		if requiredFields == nil {
-			return
-		}
+		// if requiredFields == nil {
+		// 	return
+		// }
 		opts.has_requiredFields = true
 		opts.requiredFields = *requiredFields
 	}
@@ -144,9 +144,9 @@ func GenOptsGenerateParamsStruct(generateParamsStruct bool) GenOptsOption {
 }
 func GenOptsGenerateParamsStructFlag(generateParamsStruct *bool) GenOptsOption {
 	return func(opts *genOptsOptionImpl) {
-		if generateParamsStruct == nil {
-			return
-		}
+		// if generateParamsStruct == nil {
+		// 	return
+		// }
 		opts.has_generateParamsStruct = true
 		opts.generateParamsStruct = *generateParamsStruct
 	}
