@@ -18,9 +18,9 @@ func UpdateThreads(threads int) UpdateOption {
 }
 func UpdateThreadsFlag(threads *int) UpdateOption {
 	return func(opts *updateOptionImpl) {
-		// if threads == nil {
-		// 	return
-		// }
+		if threads == nil {
+			return
+		}
 		opts.has_threads = true
 		opts.threads = *threads
 	}
