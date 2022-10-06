@@ -2,32 +2,56 @@ package gen
 
 import (
 	"bytes"
+	"encoding/csv"
 	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"text/template"
 	"unicode"
 
 	"github.com/iancoleman/strcase"
 	"github.com/pkg/errors"
+	"github.com/spudtrooper/goutil/slice"
 )
 
 type reqField struct {
 	name, typ string
 }
 
+type field struct {
+	Name, Type string
+}
+type function struct {
+	FunctionName string
+	Field        field
+}
+type interfaceFunction struct {
+	ObjectName   string
+	FunctionName string
+	Field        field
+}
+
+type typeDef struct {
+	name   string
+	fields []field
+}
+
 func GenOpts(optType, implType string, dir, goImportsBin string, fieldDefs []string, optss ...GenOptsOption) (string, error) {
+	opts := MakeGenOptsOptions(optss...)
+	extends := removeQuotes(opts.Extends())
+
 	dir = removeQuotes(dir)
 	goImportsBin = removeQuotes(goImportsBin)
 	fieldDefs = removeQuotesSlice(fieldDefs)
 
-	opts := MakeGenOptsOptions(optss...)
 	originalImplType := implType
 	var prefix string
 	if opts.Prefix() != "" {
@@ -67,8 +91,16 @@ func GenOpts(optType, implType string, dir, goImportsBin string, fieldDefs []str
 		})
 	}
 
-	output, err := genOutput(
-		optType, implType, fieldDefs, prefix, opts.GenerateParamsStruct(), reqFields)
+	var extendedTypes []typeDef
+	if extends != "" {
+		e, err := findExtendedTypes(dir, extends)
+		if err != nil {
+			return "", err
+		}
+		extendedTypes = e
+	}
+
+	output, err := genOutput(optType, implType, fieldDefs, prefix, opts.GenerateParamsStruct(), reqFields, extendedTypes)
 	if err != nil {
 		return "", err
 	}
@@ -101,6 +133,113 @@ func GenOpts(optType, implType string, dir, goImportsBin string, fieldDefs []str
 	output = ""
 
 	return output, nil
+}
+
+var (
+	//go : generate genopts --function RestaurantDetails --params verbose debugFailure
+	genOptsFnRE = regexp.MustCompile(`^//go.generate genopts (.*)`)
+	fnExtRE     = regexp.MustCompile(`--function (\S+).*`)
+)
+
+func findExtendedTypes(dir string, extends string) ([]typeDef, error) {
+	extendsNames := slice.Strings(extends, ",")
+
+	var goFiles []string
+	files, err := ioutil.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+	for _, f := range files {
+		if ext := filepath.Ext(f.Name()); ext == ".go" {
+			goFiles = append(goFiles, f.Name())
+		}
+	}
+
+	log.Printf("found %d go files", len(goFiles))
+
+	var cmdLinesToRun []string
+	extendsMap := make(map[string]bool)
+	for _, e := range extendsNames {
+		extendsMap[e] = true
+	}
+	for _, f := range goFiles {
+		c, err := ioutil.ReadFile(filepath.Join(dir, f))
+		if err != nil {
+			return nil, err
+		}
+		for _, line := range strings.Split(string(c), "\n") {
+			if m := genOptsFnRE.FindStringSubmatch(line); len(m) == 2 {
+				cmdLine := m[1]
+				var fn string
+				if m := fnExtRE.FindStringSubmatch(cmdLine); len(m) == 2 {
+					fn = m[1]
+				}
+				if _, ok := extendsMap[fn]; ok {
+					cmdLinesToRun = append(cmdLinesToRun, cmdLine)
+				}
+			}
+
+		}
+	}
+
+	var typeDefs []typeDef
+	for _, cmdLine := range cmdLinesToRun {
+		r := csv.NewReader(strings.NewReader(cmdLine))
+		r.Comma = ' '
+		args, err := r.Read()
+		if err != nil {
+			return nil, err
+		}
+		if err := exec.Command("genopts", args...).Run(); err != nil {
+			return nil, err
+		}
+
+		rest, name := findRest(args)
+		fields := makeFields(rest)
+		t := typeDef{
+			name:   name,
+			fields: fields,
+		}
+		typeDefs = append(typeDefs, t)
+	}
+
+	return typeDefs, nil
+}
+
+func isArg(arg, name string) bool { return arg == "--"+name || arg == "-"+name }
+
+func findRest(args []string) ([]string, string) {
+	var res []string
+	var name string
+	for i := 0; i < len(args); {
+		arg := args[i]
+		if !strings.HasPrefix(arg, "-") {
+			for j := i; j < len(args); j++ {
+				res = append(res, args[j])
+			}
+			break
+		}
+		i++
+		if isArg(arg, "function") {
+			name = args[i]
+			i++
+		} else if isArg(arg, "opt_type") ||
+			isArg(arg, "impl_type") ||
+			isArg(arg, "prefix") ||
+			isArg(arg, "function") ||
+			isArg(arg, "outfile") ||
+			isArg(arg, "update_dir") ||
+			isArg(arg, "update_field") ||
+			isArg(arg, "goimports") ||
+			isArg(arg, "exclude_dirs") ||
+			isArg(arg, "config") ||
+			isArg(arg, "logfile") ||
+			isArg(arg, "required") ||
+			isArg(arg, "extends") {
+			i++
+		}
+	}
+	return res, name
 }
 
 func removeQuotesSlice(ss []string) []string {
@@ -177,7 +316,25 @@ package {{.Package}}
 	return nil
 }
 
-func genOutput(optType, implType string, fieldDefs []string, functionPrefix string, genParamsStruct bool, reqFields []reqField) (string, error) {
+func makeFields(fieldDefs []string) []field {
+	var fields []field
+	for _, f := range fieldDefs {
+		parts := strings.Split(f, ":")
+		name := parts[0]
+		typ := "bool"
+		if len(parts) == 2 {
+			name = parts[0]
+			typ = parts[1]
+		}
+		fields = append(fields, field{
+			Name: name,
+			Type: typ,
+		})
+	}
+	return fields
+}
+
+func genOutput(optType, implType string, fieldDefs []string, functionPrefix string, genParamsStruct bool, reqFields []reqField, extends []typeDef) (string, error) {
 	const tmpl = `
 {{$optType := .OptType}}
 {{$implType := .ImplType}}
@@ -189,7 +346,11 @@ type {{.OptType}}s interface {
 {{range .InterfaceFunctions}}	
 {{.FunctionName}}() {{.Field.Type}}
 Has{{.FunctionName}}() bool{{end}}
+{{- range .ToTypes}}
+	To{{.ReturnType}}s() []{{.ReturnType}}
+{{- end}}
 }
+
 {{range .Functions}}
 func {{.FunctionName}}({{.Field.Name}} {{.Field.Type}}) {{$optType}} {
 	return func(opts *{{$implType}}) {
@@ -233,6 +394,18 @@ func (o {{.ParamsStructName}}) Options() []{{.OptType}} {
 }
 {{end}}
 
+{{range .ToTypes}}
+	{{$prefix := .Prefix}}
+	// To{{.ReturnType}}s converts {{$optType}} to an array of {{.ReturnType}}
+	func (o *{{$implType}})To{{.ReturnType}}s() []{{.ReturnType}} {
+		return []{{.ReturnType}} {
+			{{- range .FieldNames}}
+				{{$prefix}}{{.}}(o.{{.}}()),
+			{{- end}}
+		}
+}
+{{end}}
+
 func make{{.ImplTypeCaps}}(opts ...{{.OptType}}) *{{.ImplType}} {
 	res := &{{.ImplType}}{}
 	for _, opt := range opts {
@@ -245,18 +418,6 @@ func Make{{.OptType}}s(opts ...{{.OptType}}) {{.OptType}}s {
 	return make{{.ImplTypeCaps}}(opts...)
 }
 `
-	type field struct {
-		Name, Type string
-	}
-	type function struct {
-		FunctionName string
-		Field        field
-	}
-	type interfaceFunction struct {
-		ObjectName   string
-		FunctionName string
-		Field        field
-	}
 
 	title := func(str string) string {
 		if str == "" {
@@ -271,19 +432,41 @@ func Make{{.OptType}}s(opts ...{{.OptType}}) {{.OptType}}s {
 		return strcase.ToSnake(s)
 	}
 
-	var fields []field
-	for _, f := range fieldDefs {
-		parts := strings.Split(f, ":")
-		name := parts[0]
-		typ := "bool"
-		if len(parts) == 2 {
-			name = parts[0]
-			typ = parts[1]
+	fields := makeFields(fieldDefs)
+	seenFields := map[string]bool{}
+	for _, f := range fields {
+		if seenFields[f.Name] {
+			return "", fmt.Errorf("duplicate field %q", f.Name)
 		}
-		fields = append(fields, field{
-			Name: name,
-			Type: typ,
-		})
+		seenFields[f.Name] = true
+	}
+
+	for _, td := range extends {
+		for _, f := range td.fields {
+			if !seenFields[f.Name] {
+				fields = append(fields, f)
+				seenFields[f.Name] = true
+			}
+		}
+	}
+
+	type toType struct {
+		Prefix     string
+		ReturnType string
+		FieldNames []string
+	}
+	var toTypes []toType
+	for _, td := range extends {
+		var fieldNames []string
+		for _, f := range td.fields {
+			fieldNames = append(fieldNames, title(f.Name))
+		}
+		tt := toType{
+			Prefix:     td.name,
+			ReturnType: td.name + "Option",
+			FieldNames: fieldNames,
+		}
+		toTypes = append(toTypes, tt)
 	}
 
 	type requiredField struct {
@@ -339,6 +522,7 @@ func Make{{.OptType}}s(opts ...{{.OptType}}) {{.OptType}}s {
 		ParamsStructName   string
 		RequiredFields     []requiredField
 		FunctionPrefix     string
+		ToTypes            []toType
 	}{
 		OptType:            optType,
 		ImplType:           implType,
@@ -350,6 +534,7 @@ func Make{{.OptType}}s(opts ...{{.OptType}}) {{.OptType}}s {
 		ParamsStructName:   paramsStructName,
 		RequiredFields:     requiredFields,
 		FunctionPrefix:     functionPrefix,
+		ToTypes:            toTypes,
 	}); err != nil {
 		return "", err
 	}

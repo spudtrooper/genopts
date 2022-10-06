@@ -1,7 +1,7 @@
 // DO NOT EDIT MANUALLY: Generated from https://github.com/spudtrooper/genopts
 package gen
 
-//go:generate genopts --prefix=GenOpts --outfile=gen/genoptsoptions.go "prefixOptsType:bool" "prefix:string" "function:string" "outfile:string" "batch:bool" "nocommandline" "requiredFields:string" "generateParamsStruct"
+//go:generate genopts --prefix=GenOpts --outfile=genoptsoptions.go "prefixOptsType:bool" "prefix:string" "function:string" "outfile:string" "batch:bool" "nocommandline" "requiredFields:string" "generateParamsStruct" "extends:string"
 
 type GenOptsOption func(*genOptsOptionImpl)
 
@@ -22,6 +22,8 @@ type GenOptsOptions interface {
 	HasRequiredFields() bool
 	GenerateParamsStruct() bool
 	HasGenerateParamsStruct() bool
+	Extends() string
+	HasExtends() bool
 }
 
 func GenOptsPrefixOptsType(prefixOptsType bool) GenOptsOption {
@@ -152,6 +154,22 @@ func GenOptsGenerateParamsStructFlag(generateParamsStruct *bool) GenOptsOption {
 	}
 }
 
+func GenOptsExtends(extends string) GenOptsOption {
+	return func(opts *genOptsOptionImpl) {
+		opts.has_extends = true
+		opts.extends = extends
+	}
+}
+func GenOptsExtendsFlag(extends *string) GenOptsOption {
+	return func(opts *genOptsOptionImpl) {
+		if extends == nil {
+			return
+		}
+		opts.has_extends = true
+		opts.extends = *extends
+	}
+}
+
 type genOptsOptionImpl struct {
 	prefixOptsType           bool
 	has_prefixOptsType       bool
@@ -169,6 +187,8 @@ type genOptsOptionImpl struct {
 	has_requiredFields       bool
 	generateParamsStruct     bool
 	has_generateParamsStruct bool
+	extends                  string
+	has_extends              bool
 }
 
 func (g *genOptsOptionImpl) PrefixOptsType() bool          { return g.prefixOptsType }
@@ -187,6 +207,8 @@ func (g *genOptsOptionImpl) RequiredFields() string        { return g.requiredFi
 func (g *genOptsOptionImpl) HasRequiredFields() bool       { return g.has_requiredFields }
 func (g *genOptsOptionImpl) GenerateParamsStruct() bool    { return g.generateParamsStruct }
 func (g *genOptsOptionImpl) HasGenerateParamsStruct() bool { return g.has_generateParamsStruct }
+func (g *genOptsOptionImpl) Extends() string               { return g.extends }
+func (g *genOptsOptionImpl) HasExtends() bool              { return g.has_extends }
 
 func makeGenOptsOptionImpl(opts ...GenOptsOption) *genOptsOptionImpl {
 	res := &genOptsOptionImpl{}

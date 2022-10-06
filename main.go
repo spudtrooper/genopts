@@ -23,21 +23,22 @@ import (
 var (
 	optType        = flag.String("opt_type", "", "The name of the primary options type. If empty and there is a prefix, --opt_type is the prefix + \"Option\"; if prefix is empty --opt_type is \"Option\"")
 	implType       = flag.String("impl_type", "", "The name of the implementation type; if empty this is derived from --opts_type")
-	prefixOptsType = flag.Bool("prefix_opts_type", false, "Prefix each option function with the --opts_type; --prefix takes precendence over --prefix_opts_type")
 	prefix         = flag.String("prefix", "", "Prefix each option with this string; --prefix takes precendence over --prefix_opts_type")
-	nocommandLine  = flag.Bool("nocommandline", false, "Don't output the command line in the options file")
 	function       = flag.String("function", "", "The same as --prefix <function> --nocommandline. When you add a go:generate declaration above a function, use this instead of prefix")
 	outfile        = flag.String("outfile", "", "Output result to this file in addition to printing to STDOUT")
-	update         = flag.Bool("update", false, "update all files recurisvely in the current directory or directory specified by --update_dir")
 	updateDir      = flag.String("update_dir", ".", "directory for update")
 	updateFile     = flag.String("update_file", "", "single file to update")
 	goimports      = flag.String("goimports", "", "full path to goimports, if empty we use ~/go/bin/goimports")
 	excludeDirs    = flag.String("exclude_dirs", "", "comma-separated list of directory base names to exclude when --update is set")
 	config         = flag.String("config", "", "absolute location of config. If empty we'll look in $update_dir/.genopts")
-	writeConfig    = flag.Bool("write_config", false, "update the expected config file. This is used to set the config after setting explicit flags")
-	batch          = flag.Bool("batch", false, "running in batch mode, this is added to commandlines when --update is set. Don't set this manually")
 	logfile        = flag.String("logfile", "", "file to which we log")
 	required       = flag.String("required", "", "comma-separated list of required fields where each field is of the form \"<name> <type>\" or \"<name>:<type>\"")
+	extends        = flag.String("extends", "", "comma-separated list of types to extend")
+	prefixOptsType = flag.Bool("prefix_opts_type", false, "Prefix each option function with the --opts_type; --prefix takes precendence over --prefix_opts_type")
+	nocommandLine  = flag.Bool("nocommandline", false, "Don't output the command line in the options file")
+	update         = flag.Bool("update", false, "update all files recurisvely in the current directory or directory specified by --update_dir")
+	writeConfig    = flag.Bool("write_config", false, "update the expected config file. This is used to set the config after setting explicit flags")
+	batch          = flag.Bool("batch", false, "running in batch mode, this is added to commandlines when --update is set. Don't set this manually")
 	params         = flag.Bool("params", false, "generate a handler struct")
 )
 
@@ -183,6 +184,7 @@ func genOpts(dir, goImportsBin string) error {
 		gen.GenOptsOutfile(*outfile),
 		gen.GenOptsRequiredFields(*required),
 		gen.GenOptsGenerateParamsStruct(*params),
+		gen.GenOptsExtends(*extends),
 	)
 	if err != nil {
 		return err
