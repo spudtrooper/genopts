@@ -155,8 +155,6 @@ func findExtendedTypes(dir string, extends string) ([]typeDef, error) {
 		}
 	}
 
-	log.Printf("found %d go files", len(goFiles))
-
 	var cmdLinesToRun []string
 	extendsMap := make(map[string]bool)
 	for _, e := range extendsNames {
