@@ -49,7 +49,7 @@ so you could have cleaner and easier-to-maintain code like:
 import "github.com/spudtrooper/goutil/or"
 
 //go:generate genopts --function Foo 'bar:bool' 'baz:int' 'boo:string'
-func Foo(requiredString string bool, fOpts...FooOption) { 
+func Foo(requiredString string, fOpts...FooOption) { 
 	opts := MakeFooOptions(fOpts...)
 
 	bar := or.Bool(opts.Bar(), false)
