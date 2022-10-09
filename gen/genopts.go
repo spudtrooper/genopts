@@ -27,7 +27,7 @@ type reqField struct {
 }
 
 type field struct {
-	Name, Type string
+	Name, Type, Default, DefaultSelector string
 }
 type function struct {
 	FunctionName string
@@ -320,16 +320,37 @@ func makeFields(fieldDefs []string) []field {
 		parts := strings.Split(f, ":")
 		name := parts[0]
 		typ := "bool"
-		if len(parts) == 2 {
+		if len(parts) >= 2 {
 			name = parts[0]
 			typ = parts[1]
 		}
-		fields = append(fields, field{
+		f := field{
 			Name: name,
 			Type: typ,
-		})
+		}
+		if len(parts) == 3 {
+			defaultSelector := title(f.Type)
+			switch f.Type {
+			case "time.Time":
+				defaultSelector = "Time"
+			case "time.Duration":
+				defaultSelector = "Duration"
+			}
+			f.DefaultSelector = defaultSelector
+			f.Default = parts[2]
+		}
+		fields = append(fields, f)
 	}
 	return fields
+}
+
+func title(str string) string {
+	if str == "" {
+		return ""
+	}
+	s := []rune(str)
+	s[0] = unicode.ToUpper(s[0])
+	return string(s)
 }
 
 func genOutput(optType, implType string, fieldDefs []string, functionPrefix string, genParamsStruct bool, reqFields []reqField, extends []typeDef) (string, error) {
@@ -337,6 +358,10 @@ func genOutput(optType, implType string, fieldDefs []string, functionPrefix stri
 {{$optType := .OptType}}
 {{$implType := .ImplType}}
 {{$functionPrefix := .FunctionPrefix}}
+
+import (
+	"github.com/spudtrooper/goutil/or"
+)
 
 type {{.OptType}} func(*{{.ImplType}})
 
@@ -371,25 +396,30 @@ type {{.ImplType}} struct {
 has_{{.Name}} bool
 {{end}}
 }
-{{range .InterfaceFunctions}}
-func ({{.ObjectName}} *{{$implType}}) {{.FunctionName}}() {{.Field.Type}} { return {{.ObjectName}}.{{.Field.Name}} }
-func ({{.ObjectName}} *{{$implType}}) Has{{.FunctionName}}() bool { return {{.ObjectName}}.has_{{.Field.Name}} }{{end}}
+{{- range .InterfaceFunctions}}
+	{{- if .Field.Default}}
+	func ({{.ObjectName}} *{{$implType}}) {{.FunctionName}}() {{.Field.Type}} {  return or.{{.Field.DefaultSelector}}({{.ObjectName}}.{{.Field.Name}}, {{.Field.Default}}) }
+	{{- else}}
+	func ({{.ObjectName}} *{{$implType}}) {{.FunctionName}}() {{.Field.Type}} { return {{.ObjectName}}.{{.Field.Name}} }
+	{{- end}}
+	func ({{.ObjectName}} *{{$implType}}) Has{{.FunctionName}}() bool { return {{.ObjectName}}.has_{{.Field.Name}} }
+{{- end}}
 
 {{if .GenParamsStruct}}
-type  {{.ParamsStructName}} struct {
-	{{range .RequiredFields}}{{.Name}} {{.Type}}{{if .Required}}` + "`" + `json:"{{.SnakeName}}" required:"true"` + "`" + `{{else}}` + "`" + `json:"{{.SnakeName}}"` + "`" + `{{end}}
-	{{end}}
-}
+	type  {{.ParamsStructName}} struct {
+		{{range .RequiredFields}}{{.Name}} {{.Type}}` + " `" + `json:"{{.SnakeName}}"{{if .Required}} required:"true"{{end}}{{if .Default}} default:"{{.Default}}"{{end}}` + "`" + `
+		{{end}}
+	}
 
-func (o {{.ParamsStructName}}) Options() []{{.OptType}} {
-	return []{{.OptType}}{
-		{{- range .RequiredFields}}
-			{{- if not .Required}}
-				{{$functionPrefix}}{{.Name}}(o.{{.Name}}),
+	func (o {{.ParamsStructName}}) Options() []{{.OptType}} {
+		return []{{.OptType}}{
+			{{- range .RequiredFields}}
+				{{- if not .Required}}
+					{{$functionPrefix}}{{.Name}}(o.{{.Name}}),
+				{{- end}}
 			{{- end}}
-		{{- end}}
-	}	
-}
+		}	
+	}
 {{end}}
 
 {{range .ToTypes}}
@@ -416,15 +446,6 @@ func Make{{.OptType}}s(opts ...{{.OptType}}) {{.OptType}}s {
 	return make{{.ImplTypeCaps}}(opts...)
 }
 `
-
-	title := func(str string) string {
-		if str == "" {
-			return ""
-		}
-		s := []rune(str)
-		s[0] = unicode.ToUpper(s[0])
-		return string(s)
-	}
 
 	snake := func(s string) string {
 		return strcase.ToSnake(s)
@@ -470,6 +491,7 @@ func Make{{.OptType}}s(opts ...{{.OptType}}) {{.OptType}}s {
 	type requiredField struct {
 		Name, Type, SnakeName string
 		Required              bool
+		Default               string
 	}
 	var requiredFields []requiredField
 	for _, f := range reqFields {
@@ -485,6 +507,7 @@ func Make{{.OptType}}s(opts ...{{.OptType}}) {{.OptType}}s {
 			Name:      title(f.Name),
 			SnakeName: snake(f.Name),
 			Type:      f.Type,
+			Default:   f.Default,
 		})
 	}
 
