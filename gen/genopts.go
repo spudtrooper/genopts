@@ -77,6 +77,7 @@ func GenOpts(optType, implType string, dir, goImportsBin string, fieldDefs []str
 		if s == "" {
 			continue
 		}
+		s := strings.TrimSpace(s)
 		parts := strings.Split(s, ":")
 		if len(parts) != 2 {
 			parts = strings.Split(s, " ")
