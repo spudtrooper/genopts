@@ -29,14 +29,17 @@ type reqField struct {
 type field struct {
 	Name, Type, Default, DefaultSelector string
 }
+
 type function struct {
 	FunctionName string
 	Field        field
 }
+
 type interfaceFunction struct {
 	ObjectName   string
 	FunctionName string
 	Field        field
+	MaybeQuote   string // This is a hack to get around the fact that we need to quote strings in the or and json-default annotation.
 }
 
 type typeDef struct {
@@ -329,7 +332,7 @@ func makeFields(fieldDefs []string) []field {
 			Name: name,
 			Type: typ,
 		}
-		if len(parts) == 3 {
+		if len(parts) >= 3 {
 			defaultSelector := title(f.Type)
 			switch f.Type {
 			case "time.Time":
@@ -338,7 +341,7 @@ func makeFields(fieldDefs []string) []field {
 				defaultSelector = "Duration"
 			}
 			f.DefaultSelector = defaultSelector
-			f.Default = parts[2]
+			f.Default = strings.Join(parts[2:], ":")
 		}
 		fields = append(fields, f)
 	}
@@ -399,7 +402,7 @@ has_{{.Name}} bool
 }
 {{- range .InterfaceFunctions}}
 	{{- if .Field.Default}}
-	func ({{.ObjectName}} *{{$implType}}) {{.FunctionName}}() {{.Field.Type}} {  return or.{{.Field.DefaultSelector}}({{.ObjectName}}.{{.Field.Name}}, {{.Field.Default}}) }
+	func ({{.ObjectName}} *{{$implType}}) {{.FunctionName}}() {{.Field.Type}} {  return or.{{.Field.DefaultSelector}}({{.ObjectName}}.{{.Field.Name}}, {{.MaybeQuote}}{{.Field.Default}}{{.MaybeQuote}}) }
 	{{- else}}
 	func ({{.ObjectName}} *{{$implType}}) {{.FunctionName}}() {{.Field.Type}} { return {{.ObjectName}}.{{.Field.Name}} }
 	{{- end}}
@@ -408,7 +411,7 @@ has_{{.Name}} bool
 
 {{if .GenParamsStruct}}
 	type  {{.ParamsStructName}} struct {
-		{{range .RequiredFields}}{{.Name}} {{.Type}}` + " `" + `json:"{{.SnakeName}}"{{if .Required}} required:"true"{{end}}{{if .Default}} default:"{{.Default}}"{{end}}` + "`" + `
+		{{range .RequiredFields}}{{.Name}} {{.Type}}` + " `" + `json:"{{.SnakeName}}"{{if .Required}} required:"true"{{end}}{{if .Default}} default:"{{.MaybeEscapedQuote}}{{.Default}}{{.MaybeEscapedQuote}}"{{end}}` + "`" + `
 		{{end}}
 	}
 
@@ -493,6 +496,7 @@ func Make{{.OptType}}s(opts ...{{.OptType}}) {{.OptType}}s {
 		Name, Type, SnakeName string
 		Required              bool
 		Default               string
+		MaybeEscapedQuote     string // This is a hack to get around the fact that we need to quote strings in the or and json-default annotation.
 	}
 	var requiredFields []requiredField
 	for _, f := range reqFields {
@@ -504,12 +508,16 @@ func Make{{.OptType}}s(opts ...{{.OptType}}) {{.OptType}}s {
 		})
 	}
 	for _, f := range fields {
-		requiredFields = append(requiredFields, requiredField{
+		rf := requiredField{
 			Name:      title(f.Name),
 			SnakeName: snake(f.Name),
 			Type:      f.Type,
 			Default:   f.Default,
-		})
+		}
+		if f.Type == "string" {
+			rf.MaybeEscapedQuote = `\"`
+		}
+		requiredFields = append(requiredFields, rf)
 	}
 
 	var functions []function
@@ -523,11 +531,16 @@ func Make{{.OptType}}s(opts ...{{.OptType}}) {{.OptType}}s {
 			FunctionName: functionName,
 			Field:        f,
 		})
-		interfaceFunctions = append(interfaceFunctions, interfaceFunction{
+		ifn := interfaceFunction{
 			ObjectName:   strings.ToLower(string(implType[0])),
 			FunctionName: title(f.Name),
 			Field:        f,
-		})
+		}
+		if f.Type == "string" {
+			ifn.MaybeQuote = `"`
+		}
+		interfaceFunctions = append(interfaceFunctions, ifn)
+
 	}
 
 	paramsStructName := title(strings.Replace(optType, "Option", "", 1)) + "Params"
