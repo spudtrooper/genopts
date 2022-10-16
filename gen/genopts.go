@@ -402,7 +402,16 @@ has_{{.Name}} bool
 }
 {{- range .InterfaceFunctions}}
 	{{- if .Field.Default}}
-	func ({{.ObjectName}} *{{$implType}}) {{.FunctionName}}() {{.Field.Type}} {  return or.{{.Field.DefaultSelector}}({{.ObjectName}}.{{.Field.Name}}, {{.MaybeQuote}}{{.Field.Default}}{{.MaybeQuote}}) }
+	{{- if eq .Field.Type "bool" }}
+		func ({{.ObjectName}} *{{$implType}}) {{.FunctionName}}() {{.Field.Type}} {  
+			if {{.ObjectName}}.Has{{.FunctionName}}() {
+				return {{.ObjectName}}.{{.Field.Name}}
+			}
+			return {{.Field.Default}}
+		}
+	{{- else }}
+		func ({{.ObjectName}} *{{$implType}}) {{.FunctionName}}() {{.Field.Type}} {  return or.{{.Field.DefaultSelector}}({{.ObjectName}}.{{.Field.Name}}, {{.MaybeQuote}}{{.Field.Default}}{{.MaybeQuote}}) }
+	{{- end}}
 	{{- else}}
 	func ({{.ObjectName}} *{{$implType}}) {{.FunctionName}}() {{.Field.Type}} { return {{.ObjectName}}.{{.Field.Name}} }
 	{{- end}}
