@@ -367,7 +367,12 @@ import (
 	"github.com/spudtrooper/goutil/or"
 )
 
-type {{.OptType}} func(*{{.ImplType}})
+type {{.OptType}} struct {
+	f func(*{{.ImplType}})
+	s string
+}
+
+func (o {{.OptType}}) String() string { return o.s }
 
 type {{.OptType}}s interface {
 {{range .InterfaceFunctions}}	
@@ -380,19 +385,19 @@ Has{{.FunctionName}}() bool{{end}}
 
 {{range .Functions}}
 func {{.FunctionName}}({{.Field.Name}} {{.Field.Type}}) {{$optType}} {
-	return func(opts *{{$implType}}) {
+	return {{$optType}}{func(opts *{{$implType}}) {
 		opts.has_{{.Field.Name}} = true
 		opts.{{.Field.Name}} = {{.Field.Name}}
-	}
+	}, "{{.FunctionName}}({{.Field.Type}})"}
 }
 func {{.FunctionName}}Flag({{.Field.Name}} *{{.Field.Type}}) {{$optType}} {
-	return func(opts *{{$implType}}) {
+	return {{$optType}}{func(opts *{{$implType}}) {
 		if {{.Field.Name}} == nil {
 			return
 		}
 		opts.has_{{.Field.Name}} = true
 		opts.{{.Field.Name}} = *{{.Field.Name}}
-	}
+	}, "{{.FunctionName}}({{.Field.Type}})"}
 }
 {{end}}
 type {{.ImplType}} struct {
@@ -450,7 +455,7 @@ has_{{.Name}} bool
 func make{{.ImplTypeCaps}}(opts ...{{.OptType}}) *{{.ImplType}} {
 	res := &{{.ImplType}}{}
 	for _, opt := range opts {
-		opt(res)
+		opt.f(res)
 	}
 	return res
 }
