@@ -62,8 +62,6 @@ func GenOpts(optType, implType string, dir, goImportsBin string, fieldDefs []str
 		return "", errors.Errorf("os.Getwd: %v", err)
 	}
 
-	md := newMetadataCacheFromPWD(pwd)
-
 	originalImplType := implType
 	var prefix string
 	if opts.Prefix() != "" {
@@ -139,7 +137,7 @@ func GenOpts(optType, implType string, dir, goImportsBin string, fieldDefs []str
 	pkg := path.Base(path.Dir(abs))
 
 	fields := makeFields(fieldDefs)
-	output, err := genOutput(pkg, optType, implType, fields, prefix, opts.GenerateParamsStruct(), reqFields, extendedTypes, md, tc)
+	output, err := genOutput(pkg, optType, implType, fields, prefix, opts.GenerateParamsStruct(), reqFields, extendedTypes, tc)
 	if err != nil {
 		return "", err
 	}
@@ -490,7 +488,7 @@ func title(str string) string {
 	return string(s)
 }
 
-func genOutput(pkg, optType, implType string, fields []field, functionPrefix string, genParamsStruct bool, reqFields []reqField, extends []typeDef, md *metadataCache, tc *typeDefCache) (string, error) {
+func genOutput(pkg, optType, implType string, fields []field, functionPrefix string, genParamsStruct bool, reqFields []reqField, extends []typeDef, tc *typeDefCache) (string, error) {
 	const tmpl = `
 {{$optType := .OptType}}
 {{$package := .Package}}
