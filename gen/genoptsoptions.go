@@ -1,6 +1,8 @@
 // DO NOT EDIT MANUALLY: Generated from https://github.com/spudtrooper/genopts
 package gen
 
+import "fmt"
+
 //go:generate genopts --prefix=GenOpts --outfile=gen/genoptsoptions.go "prefixOptsType:bool" "prefix:string" "function:string" "outfile:string" "batch:bool" "nocommandline" "requiredFields:string" "generateParamsStruct" "extends:string"
 
 type GenOptsOption struct {
@@ -35,7 +37,7 @@ func GenOptsPrefixOptsType(prefixOptsType bool) GenOptsOption {
 	return GenOptsOption{func(opts *genOptsOptionImpl) {
 		opts.has_prefixOptsType = true
 		opts.prefixOptsType = prefixOptsType
-	}, "gen.GenOptsPrefixOptsType(bool)"}
+	}, fmt.Sprintf("gen.GenOptsPrefixOptsType(bool %+v)}", prefixOptsType)}
 }
 func GenOptsPrefixOptsTypeFlag(prefixOptsType *bool) GenOptsOption {
 	return GenOptsOption{func(opts *genOptsOptionImpl) {
@@ -44,14 +46,14 @@ func GenOptsPrefixOptsTypeFlag(prefixOptsType *bool) GenOptsOption {
 		}
 		opts.has_prefixOptsType = true
 		opts.prefixOptsType = *prefixOptsType
-	}, "gen.GenOptsPrefixOptsType(bool)"}
+	}, fmt.Sprintf("gen.GenOptsPrefixOptsType(bool %+v)}", prefixOptsType)}
 }
 
 func GenOptsPrefix(prefix string) GenOptsOption {
 	return GenOptsOption{func(opts *genOptsOptionImpl) {
 		opts.has_prefix = true
 		opts.prefix = prefix
-	}, "gen.GenOptsPrefix(string)"}
+	}, fmt.Sprintf("gen.GenOptsPrefix(string %+v)}", prefix)}
 }
 func GenOptsPrefixFlag(prefix *string) GenOptsOption {
 	return GenOptsOption{func(opts *genOptsOptionImpl) {
@@ -60,14 +62,14 @@ func GenOptsPrefixFlag(prefix *string) GenOptsOption {
 		}
 		opts.has_prefix = true
 		opts.prefix = *prefix
-	}, "gen.GenOptsPrefix(string)"}
+	}, fmt.Sprintf("gen.GenOptsPrefix(string %+v)}", prefix)}
 }
 
 func GenOptsFunction(function string) GenOptsOption {
 	return GenOptsOption{func(opts *genOptsOptionImpl) {
 		opts.has_function = true
 		opts.function = function
-	}, "gen.GenOptsFunction(string)"}
+	}, fmt.Sprintf("gen.GenOptsFunction(string %+v)}", function)}
 }
 func GenOptsFunctionFlag(function *string) GenOptsOption {
 	return GenOptsOption{func(opts *genOptsOptionImpl) {
@@ -76,14 +78,14 @@ func GenOptsFunctionFlag(function *string) GenOptsOption {
 		}
 		opts.has_function = true
 		opts.function = *function
-	}, "gen.GenOptsFunction(string)"}
+	}, fmt.Sprintf("gen.GenOptsFunction(string %+v)}", function)}
 }
 
 func GenOptsOutfile(outfile string) GenOptsOption {
 	return GenOptsOption{func(opts *genOptsOptionImpl) {
 		opts.has_outfile = true
 		opts.outfile = outfile
-	}, "gen.GenOptsOutfile(string)"}
+	}, fmt.Sprintf("gen.GenOptsOutfile(string %+v)}", outfile)}
 }
 func GenOptsOutfileFlag(outfile *string) GenOptsOption {
 	return GenOptsOption{func(opts *genOptsOptionImpl) {
@@ -92,14 +94,14 @@ func GenOptsOutfileFlag(outfile *string) GenOptsOption {
 		}
 		opts.has_outfile = true
 		opts.outfile = *outfile
-	}, "gen.GenOptsOutfile(string)"}
+	}, fmt.Sprintf("gen.GenOptsOutfile(string %+v)}", outfile)}
 }
 
 func GenOptsBatch(batch bool) GenOptsOption {
 	return GenOptsOption{func(opts *genOptsOptionImpl) {
 		opts.has_batch = true
 		opts.batch = batch
-	}, "gen.GenOptsBatch(bool)"}
+	}, fmt.Sprintf("gen.GenOptsBatch(bool %+v)}", batch)}
 }
 func GenOptsBatchFlag(batch *bool) GenOptsOption {
 	return GenOptsOption{func(opts *genOptsOptionImpl) {
@@ -108,14 +110,14 @@ func GenOptsBatchFlag(batch *bool) GenOptsOption {
 		}
 		opts.has_batch = true
 		opts.batch = *batch
-	}, "gen.GenOptsBatch(bool)"}
+	}, fmt.Sprintf("gen.GenOptsBatch(bool %+v)}", batch)}
 }
 
 func GenOptsNocommandline(nocommandline bool) GenOptsOption {
 	return GenOptsOption{func(opts *genOptsOptionImpl) {
 		opts.has_nocommandline = true
 		opts.nocommandline = nocommandline
-	}, "gen.GenOptsNocommandline(bool)"}
+	}, fmt.Sprintf("gen.GenOptsNocommandline(bool %+v)}", nocommandline)}
 }
 func GenOptsNocommandlineFlag(nocommandline *bool) GenOptsOption {
 	return GenOptsOption{func(opts *genOptsOptionImpl) {
@@ -124,14 +126,14 @@ func GenOptsNocommandlineFlag(nocommandline *bool) GenOptsOption {
 		}
 		opts.has_nocommandline = true
 		opts.nocommandline = *nocommandline
-	}, "gen.GenOptsNocommandline(bool)"}
+	}, fmt.Sprintf("gen.GenOptsNocommandline(bool %+v)}", nocommandline)}
 }
 
 func GenOptsRequiredFields(requiredFields string) GenOptsOption {
 	return GenOptsOption{func(opts *genOptsOptionImpl) {
 		opts.has_requiredFields = true
 		opts.requiredFields = requiredFields
-	}, "gen.GenOptsRequiredFields(string)"}
+	}, fmt.Sprintf("gen.GenOptsRequiredFields(string %+v)}", requiredFields)}
 }
 func GenOptsRequiredFieldsFlag(requiredFields *string) GenOptsOption {
 	return GenOptsOption{func(opts *genOptsOptionImpl) {
@@ -140,14 +142,14 @@ func GenOptsRequiredFieldsFlag(requiredFields *string) GenOptsOption {
 		}
 		opts.has_requiredFields = true
 		opts.requiredFields = *requiredFields
-	}, "gen.GenOptsRequiredFields(string)"}
+	}, fmt.Sprintf("gen.GenOptsRequiredFields(string %+v)}", requiredFields)}
 }
 
 func GenOptsGenerateParamsStruct(generateParamsStruct bool) GenOptsOption {
 	return GenOptsOption{func(opts *genOptsOptionImpl) {
 		opts.has_generateParamsStruct = true
 		opts.generateParamsStruct = generateParamsStruct
-	}, "gen.GenOptsGenerateParamsStruct(bool)"}
+	}, fmt.Sprintf("gen.GenOptsGenerateParamsStruct(bool %+v)}", generateParamsStruct)}
 }
 func GenOptsGenerateParamsStructFlag(generateParamsStruct *bool) GenOptsOption {
 	return GenOptsOption{func(opts *genOptsOptionImpl) {
@@ -156,14 +158,14 @@ func GenOptsGenerateParamsStructFlag(generateParamsStruct *bool) GenOptsOption {
 		}
 		opts.has_generateParamsStruct = true
 		opts.generateParamsStruct = *generateParamsStruct
-	}, "gen.GenOptsGenerateParamsStruct(bool)"}
+	}, fmt.Sprintf("gen.GenOptsGenerateParamsStruct(bool %+v)}", generateParamsStruct)}
 }
 
 func GenOptsExtends(extends string) GenOptsOption {
 	return GenOptsOption{func(opts *genOptsOptionImpl) {
 		opts.has_extends = true
 		opts.extends = extends
-	}, "gen.GenOptsExtends(string)"}
+	}, fmt.Sprintf("gen.GenOptsExtends(string %+v)}", extends)}
 }
 func GenOptsExtendsFlag(extends *string) GenOptsOption {
 	return GenOptsOption{func(opts *genOptsOptionImpl) {
@@ -172,7 +174,7 @@ func GenOptsExtendsFlag(extends *string) GenOptsOption {
 		}
 		opts.has_extends = true
 		opts.extends = *extends
-	}, "gen.GenOptsExtends(string)"}
+	}, fmt.Sprintf("gen.GenOptsExtends(string %+v)}", extends)}
 }
 
 type genOptsOptionImpl struct {

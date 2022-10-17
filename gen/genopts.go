@@ -43,8 +43,10 @@ type interfaceFunction struct {
 }
 
 type typeDef struct {
-	name   string
-	fields []field
+	name    string
+	extends []string
+	fields  []field
+	args    []string
 }
 
 func GenOpts(optType, implType string, dir, goImportsBin string, fieldDefs []string, optss ...GenOptsOption) (string, error) {
@@ -54,6 +56,13 @@ func GenOpts(optType, implType string, dir, goImportsBin string, fieldDefs []str
 	dir = removeQuotes(dir)
 	goImportsBin = removeQuotes(goImportsBin)
 	fieldDefs = removeQuotesSlice(fieldDefs)
+
+	pwd, err := os.Getwd()
+	if err != nil {
+		return "", errors.Errorf("os.Getwd: %v", err)
+	}
+
+	md := newMetadataCacheFromPWD(pwd)
 
 	originalImplType := implType
 	var prefix string
@@ -95,9 +104,14 @@ func GenOpts(optType, implType string, dir, goImportsBin string, fieldDefs []str
 		})
 	}
 
+	tc := newTypeDefCache(dir)
+	if err := tc.init(); err != nil {
+		return "", err
+	}
+
 	var extendedTypes []typeDef
 	if extends != "" {
-		e, err := findExtendedTypes(dir, extends)
+		e, err := findExtendedTypes(tc, dir, extends)
 		if err != nil {
 			return "", err
 		}
@@ -105,10 +119,6 @@ func GenOpts(optType, implType string, dir, goImportsBin string, fieldDefs []str
 	}
 
 	var outfile string
-	pwd, err := os.Getwd()
-	if err != nil {
-		return "", errors.Errorf("os.Getwd: %v", err)
-	}
 	if opts.Outfile() != "" {
 		// If the dirname of the outfile ends with the end of the pwd, then we are running in go generate mode
 		// In this case, we use the basename of the outfile.
@@ -128,10 +138,15 @@ func GenOpts(optType, implType string, dir, goImportsBin string, fieldDefs []str
 	}
 	pkg := path.Base(path.Dir(abs))
 
-	output, err := genOutput(pkg, optType, implType, fieldDefs, prefix, opts.GenerateParamsStruct(), reqFields, extendedTypes)
+	fields := makeFields(fieldDefs)
+	output, err := genOutput(pkg, optType, implType, fields, prefix, opts.GenerateParamsStruct(), reqFields, extendedTypes, md, tc)
 	if err != nil {
 		return "", err
 	}
+
+	// if err := writeMetadata(pkg, optType, dir, abs, fields, md); err != nil {
+	// 	return "", err
+	// }
 
 	addCommandLine := !opts.Nocommandline() && opts.Function() == ""
 	if err := outputResult(pkg, outfile, output, optType, originalImplType, addCommandLine, opts); err != nil {
@@ -147,11 +162,98 @@ func GenOpts(optType, implType string, dir, goImportsBin string, fieldDefs []str
 
 var (
 	//go : generate genopts --function RestaurantDetails --params verbose debugFailure
-	genOptsFnRE = regexp.MustCompile(`^//go.generate genopts (.*)`)
-	fnExtRE     = regexp.MustCompile(`--function (\S+).*`)
+	genOptsFnRE  = regexp.MustCompile(`^//go.generate genopts (.*)`)
+	fnExtRE      = regexp.MustCompile(`--function[= ](\S+).*`)
+	extendsExtRE = regexp.MustCompile(`--extends[= ](\S+).*`)
 )
 
-func findExtendedTypes(dir string, extends string) ([]typeDef, error) {
+type typeDefCache struct {
+	dir   string
+	types map[string]*typeDef
+}
+
+func newTypeDefCache(dir string) *typeDefCache {
+	return &typeDefCache{
+		dir:   dir,
+		types: map[string]*typeDef{},
+	}
+}
+
+func (t *typeDefCache) init() error {
+	var goFiles []string
+	files, err := ioutil.ReadDir(t.dir)
+	if err != nil {
+		return err
+	}
+	for _, f := range files {
+		if ext := filepath.Ext(f.Name()); ext == ".go" {
+			goFiles = append(goFiles, f.Name())
+		}
+	}
+
+	var cmdLines []string
+	for _, f := range goFiles {
+		c, err := ioutil.ReadFile(filepath.Join(t.dir, f))
+		if err != nil {
+			return err
+		}
+		for _, line := range strings.Split(string(c), "\n") {
+			if m := genOptsFnRE.FindStringSubmatch(line); len(m) == 2 {
+				cmdLine := m[1]
+				cmdLines = append(cmdLines, cmdLine)
+			}
+		}
+	}
+
+	for _, cmdLine := range cmdLines {
+		r := csv.NewReader(strings.NewReader(cmdLine))
+		r.Comma = ' '
+		args, err := r.Read()
+		if err != nil {
+			return err
+		}
+		var extends []string
+		if m := extendsExtRE.FindStringSubmatch(cmdLine); len(m) == 2 {
+			extends = strings.Split(m[1], ",")
+		}
+		rest, name := findRest(args)
+		fields := makeFields(rest)
+		td := typeDef{
+			name:    name,
+			extends: extends,
+			fields:  fields,
+			args:    args,
+		}
+		t.types[name] = &td
+	}
+	return nil
+}
+
+func (t *typeDefCache) findType(name string) (*typeDef, error) {
+	res, ok := t.types[name]
+	if !ok {
+		return nil, errors.Errorf("type %q not found", name)
+	}
+	return res, nil
+}
+
+func findExtendedTypes(t *typeDefCache, dir string, extends string) ([]typeDef, error) {
+	extendsNames := slice.Strings(extends, ",")
+	var res []typeDef
+	for _, ext := range extendsNames {
+		td, err := t.findType(ext)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, *td)
+		if err := exec.Command("genopts", td.args...).Run(); err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func findExtendedTypesOld(dir string, extends string) ([]typeDef, error) {
 	extendsNames := slice.Strings(extends, ",")
 
 	var goFiles []string
@@ -202,17 +304,48 @@ func findExtendedTypes(dir string, extends string) ([]typeDef, error) {
 			return nil, err
 		}
 
+		var extends []string
+		if m := extendsExtRE.FindStringSubmatch(cmdLine); len(m) == 2 {
+			extends = strings.Split(m[1], ",")
+		}
+
 		rest, name := findRest(args)
 		fields := makeFields(rest)
 		t := typeDef{
-			name:   name,
-			fields: fields,
+			name:    name,
+			extends: extends,
+			fields:  fields,
 		}
 		typeDefs = append(typeDefs, t)
 	}
 
 	return typeDefs, nil
 }
+
+// func writeMetadata(pkg, optType, dir, absFile string, fields []field, md *metadataCache) error {
+// 	var mdFields []metadataField
+// 	for _, f := range fields {
+// 		mdFields = append(mdFields, metadataField{
+// 			Name: f.Name,
+// 			Type: f.Type,
+// 		})
+// 	}
+// 	relFile, err := filepath.Rel(dir, absFile)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	// TODO: remove
+// 	// t := metadataType{
+// 	// 	Package:      pkg,
+// 	// 	TypeName:     optType,
+// 	// 	RelativeFile: relFile,
+// 	// 	Fields:       mdFields,
+// 	// }
+// 	// if err := md.Update(t); err != nil {
+// 	// 	return err
+// 	// }
+// 	return nil
+// }
 
 func isArg(arg, name string) bool { return arg == "--"+name || arg == "-"+name }
 
@@ -357,7 +490,7 @@ func title(str string) string {
 	return string(s)
 }
 
-func genOutput(pkg, optType, implType string, fieldDefs []string, functionPrefix string, genParamsStruct bool, reqFields []reqField, extends []typeDef) (string, error) {
+func genOutput(pkg, optType, implType string, fields []field, functionPrefix string, genParamsStruct bool, reqFields []reqField, extends []typeDef, md *metadataCache, tc *typeDefCache) (string, error) {
 	const tmpl = `
 {{$optType := .OptType}}
 {{$package := .Package}}
@@ -389,7 +522,7 @@ func {{.FunctionName}}({{.Field.Name}} {{.Field.Type}}) {{$optType}} {
 	return {{$optType}}{func(opts *{{$implType}}) {
 		opts.has_{{.Field.Name}} = true
 		opts.{{.Field.Name}} = {{.Field.Name}}
-	}, "{{$package}}.{{.FunctionName}}({{.Field.Type}})"}
+	}, fmt.Sprintf("{{$package}}.{{.FunctionName}}({{.Field.Type}} %+v)}", {{.Field.Name}})}
 }
 func {{.FunctionName}}Flag({{.Field.Name}} *{{.Field.Type}}) {{$optType}} {
 	return {{$optType}}{func(opts *{{$implType}}) {
@@ -398,8 +531,8 @@ func {{.FunctionName}}Flag({{.Field.Name}} *{{.Field.Type}}) {{$optType}} {
 		}
 		opts.has_{{.Field.Name}} = true
 		opts.{{.Field.Name}} = *{{.Field.Name}}
-	}, "{{$package}}.{{.FunctionName}}({{.Field.Type}})"}
-}
+		}, fmt.Sprintf("{{$package}}.{{.FunctionName}}({{.Field.Type}} %+v)}", {{.Field.Name}})}
+	}
 {{end}}
 type {{.ImplType}} struct {
 {{range .Fields}}	{{.Name}} {{.Type}}
@@ -470,7 +603,6 @@ func Make{{.OptType}}s(opts ...{{.OptType}}) {{.OptType}}s {
 		return strcase.ToSnake(s)
 	}
 
-	fields := makeFields(fieldDefs)
 	seenFields := map[string]bool{}
 	for _, f := range fields {
 		if seenFields[f.Name] {
@@ -488,6 +620,42 @@ func Make{{.OptType}}s(opts ...{{.OptType}}) {{.OptType}}s {
 		}
 	}
 
+	// // If we haven't generated the extended types, this is going to error.
+	// // If this happens, it will work the second time we run it, so just
+	// // emit a warning.
+	// allFields := map[string]string{}
+	// for _, td := range extends {
+	// 	mdType, err := md.ForType(pkg, td.name+"Option")
+	// 	if err != nil {
+	// 		log.Printf("error finding type %q: %v, continuing...run genopts again to fix this", td.name, err)
+	// 		continue
+	// 	}
+	// 	for _, f := range mdType.Fields {
+	// 		typ, ok := allFields[f.Name]
+	// 		if ok {
+	// 			if typ != f.Type {
+	// 				return "", fmt.Errorf("field %q has conflicting types: %q and %q", f.Name, typ, f.Type)
+	// 			}
+	// 			continue
+	// 		}
+	// 		allFields[f.Name] = f.Type
+	// 	}
+	// }
+	// allFields = map[string]string{}
+	// for _, td := range extends {
+	// 	for _, f := range td.fields {
+	// 		typ, ok := allFields[f.Name]
+	// 		if ok {
+	// 			if typ != f.Type {
+	// 				return "", fmt.Errorf("field %q has conflicting types: %q and %q", f.Name, typ, f.Type)
+	// 			}
+	// 			continue
+	// 		}
+	// 		allFields[f.Name] = f.Type
+	// 	}
+	// }
+	// log.Printf("allFields: %+v", allFields)
+
 	type toType struct {
 		Prefix     string
 		ReturnType string
@@ -495,10 +663,14 @@ func Make{{.OptType}}s(opts ...{{.OptType}}) {{.OptType}}s {
 	}
 	var toTypes []toType
 	for _, td := range extends {
-		var fieldNames []string
-		for _, f := range td.fields {
-			fieldNames = append(fieldNames, title(f.Name))
+		fieldNames, err := transitiveFields(tc, td)
+		if err != nil {
+			return "", err
 		}
+		// var fieldNames []string
+		// for _, f := range td.fields {
+		// 	fieldNames = append(fieldNames, title(f.Name))
+		// }
 		tt := toType{
 			Prefix:     td.name,
 			ReturnType: td.name + "Option",
@@ -592,6 +764,50 @@ func Make{{.OptType}}s(opts ...{{.OptType}}) {{.OptType}}s {
 	}
 
 	return buf.String(), nil
+}
+
+func transitiveFields(tc *typeDefCache, td typeDef) ([]string, error) {
+	// if false {
+	// 	var fieldNames []string
+	// 	for _, f := range td.fields {
+	// 		fieldNames = append(fieldNames, title(f.Name))
+	// 	}
+	// 	return fieldNames
+	// }
+
+	m := map[string]string{}
+	if err := transitiveFieldsLoop(tc, td, m); err != nil {
+		return nil, err
+	}
+
+	var res []string
+	for f := range m {
+		res = append(res, title(f))
+	}
+	return res, nil
+}
+
+func transitiveFieldsLoop(tc *typeDefCache, td typeDef, res map[string]string) error {
+	for _, f := range td.fields {
+		typ, ok := res[f.Name]
+		if ok {
+			if typ != f.Type {
+				return fmt.Errorf("field %q has conflicting types: %q and %q", f.Name, typ, f.Type)
+			}
+			continue
+		}
+		res[f.Name] = f.Type
+	}
+	for _, e := range td.extends {
+		t, err := tc.findType(e)
+		if err != nil {
+			return err
+		}
+		if err := transitiveFieldsLoop(tc, *t, res); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func renderTemplate(buf io.Writer, t string, name string, data interface{}) error {
