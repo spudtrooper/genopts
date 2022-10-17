@@ -15,19 +15,18 @@ import (
 var (
 	//go : generate genopts --function RestaurantDetails --params verbose debugFailure
 	genOptsFnRE  = regexp.MustCompile(`^//go.generate genopts (.*)`)
-	fnExtRE      = regexp.MustCompile(`--function[= ](\S+).*`)
 	extendsExtRE = regexp.MustCompile(`--extends[= ](\S+).*`)
 )
 
 type typeDefCache struct {
 	dir   string
-	types map[string]*typeDef
+	types map[string]typeDef
 }
 
 func newTypeDefCache(dir string) *typeDefCache {
 	return &typeDefCache{
 		dir:   dir,
-		types: map[string]*typeDef{},
+		types: map[string]typeDef{},
 	}
 }
 
@@ -76,15 +75,15 @@ func (t *typeDefCache) init() error {
 			fields:  fields,
 			args:    args,
 		}
-		t.types[name] = &td
+		t.types[name] = td
 	}
 	return nil
 }
 
-func (t *typeDefCache) findType(name string) (*typeDef, error) {
+func (t *typeDefCache) findType(name string) (typeDef, error) {
 	res, ok := t.types[name]
 	if !ok {
-		return nil, errors.Errorf("type %q not found", name)
+		return typeDef{}, errors.Errorf("type %q not found", name)
 	}
 	return res, nil
 }
@@ -96,7 +95,7 @@ func (t *typeDefCache) findExtendedTypes(extendsNames []string) ([]typeDef, erro
 		if err != nil {
 			return nil, err
 		}
-		res = append(res, *td)
+		res = append(res, td)
 		if err := exec.Command("genopts", td.args...).Run(); err != nil {
 			return nil, err
 		}
@@ -134,7 +133,7 @@ func (tc *typeDefCache) transitiveFieldsLoop(td typeDef, res map[string]string) 
 		if err != nil {
 			return err
 		}
-		if err := tc.transitiveFieldsLoop(*t, res); err != nil {
+		if err := tc.transitiveFieldsLoop(t, res); err != nil {
 			return err
 		}
 	}

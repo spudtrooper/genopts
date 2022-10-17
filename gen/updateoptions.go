@@ -3,7 +3,7 @@ package gen
 
 import "fmt"
 
-//go:generate genopts --prefix=Update --outfile=gen/updateoptions.go "threads:int"
+//go:generate genopts --prefix=Update --outfile=updateoptions.go "threads:int"
 
 type UpdateOption struct {
 	f func(*updateOptionImpl)
