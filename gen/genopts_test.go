@@ -12,6 +12,9 @@ import (
 	"github.com/andreyvit/diff"
 )
 
+// set to true to update goldens
+const genGoldens = false
+
 func TestGenOpts(t *testing.T) {
 	var tests = []struct {
 		name       string
@@ -78,8 +81,7 @@ func TestGenOpts(t *testing.T) {
 				t.Fatalf("formatting %s: %v", gotWithPackage, err)
 			}
 
-			// set to true to update goldens
-			if false {
+			if genGoldens {
 				if err := ioutil.WriteFile(goldenFile, []byte(gotFormatted), 0755); err != nil {
 					t.Fatalf("updating golden %s: %v", goldenFile, err)
 				}
@@ -90,32 +92,6 @@ func TestGenOpts(t *testing.T) {
 				t.Errorf("GenOpts(%q,%q,%v) want != got:\n\n------\n%s\n-------", test.optType, test.implType, test.fieldSpecs, diff.LineDiff(want, got))
 			}
 		})
-	}
-}
-
-func TestMakeGenOptsOptions(t *testing.T) {
-	{
-		opts := MakeGenOptsOptions(GenOptsBatch(true))
-		if want, got := true, opts.Batch(); want != got {
-			t.Errorf("MakeGenOptsOptions: want(%v) != got(%v)", want, got)
-		}
-	}
-	{
-		var boolValue bool
-		opts := MakeGenOptsOptions(GenOptsBatchFlag(&boolValue))
-
-		boolValue = true
-		if want, got := true, opts.Batch(); want != got {
-			t.Errorf("MakeGenOptsOptions: want(%v) != got(%v)", want, got)
-		}
-		boolValue = false
-		if want, got := false, opts.Batch(); want != got {
-			t.Errorf("MakeGenOptsOptions: want(%v) != got(%v)", want, got)
-		}
-		boolValue = true
-		if want, got := true, opts.Batch(); want != got {
-			t.Errorf("MakeGenOptsOptions: want(%v) != got(%v)", want, got)
-		}
 	}
 }
 

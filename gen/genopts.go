@@ -104,11 +104,6 @@ func GenOpts(optType, implType string, dir, goImportsBin string, fieldDefs []str
 		extendedTypes = e
 	}
 
-	output, err := genOutput(optType, implType, fieldDefs, prefix, opts.GenerateParamsStruct(), reqFields, extendedTypes)
-	if err != nil {
-		return "", err
-	}
-
 	var outfile string
 	pwd, err := os.Getwd()
 	if err != nil {
@@ -127,8 +122,19 @@ func GenOpts(optType, implType string, dir, goImportsBin string, fieldDefs []str
 		outfile = path.Join(pwd, filename)
 	}
 
+	abs, err := filepath.Abs(outfile)
+	if err != nil {
+		return "", errors.Errorf("filepath.Abs(%q): %v", outfile, err)
+	}
+	pkg := path.Base(path.Dir(abs))
+
+	output, err := genOutput(pkg, optType, implType, fieldDefs, prefix, opts.GenerateParamsStruct(), reqFields, extendedTypes)
+	if err != nil {
+		return "", err
+	}
+
 	addCommandLine := !opts.Nocommandline() && opts.Function() == ""
-	if err := outputResult(outfile, output, optType, originalImplType, addCommandLine, opts); err != nil {
+	if err := outputResult(pkg, outfile, output, optType, originalImplType, addCommandLine, opts); err != nil {
 		return "", err
 	}
 	if err := postGenCleanup(goImportsBin, dir, outfile); err != nil {
@@ -252,7 +258,7 @@ func removeQuotesSlice(ss []string) []string {
 	return res
 }
 
-func outputResult(outfile, output, optType, implType string, addCommandLine bool, opts GenOptsOptions) error {
+func outputResult(pkg, outfile, output, optType, implType string, addCommandLine bool, opts GenOptsOptions) error {
 	const tmpl = `
 // DO NOT EDIT MANUALLY: Generated from https://github.com/spudtrooper/genopts
 package {{.Package}}
@@ -263,12 +269,6 @@ package {{.Package}}
 
 {{.Output}}
 	`
-
-	abs, err := filepath.Abs(outfile)
-	if err != nil {
-		return errors.Errorf("filepath.Abs(%q): %v", outfile, err)
-	}
-	pkg := path.Base(path.Dir(abs))
 	var cmdLineParts []string
 	// This has to stay in sync with flags
 	if optType != "Option" && optType != opts.Prefix()+"Option" { // The defaults
@@ -357,9 +357,10 @@ func title(str string) string {
 	return string(s)
 }
 
-func genOutput(optType, implType string, fieldDefs []string, functionPrefix string, genParamsStruct bool, reqFields []reqField, extends []typeDef) (string, error) {
+func genOutput(pkg, optType, implType string, fieldDefs []string, functionPrefix string, genParamsStruct bool, reqFields []reqField, extends []typeDef) (string, error) {
 	const tmpl = `
 {{$optType := .OptType}}
+{{$package := .Package}}
 {{$implType := .ImplType}}
 {{$functionPrefix := .FunctionPrefix}}
 
@@ -388,7 +389,7 @@ func {{.FunctionName}}({{.Field.Name}} {{.Field.Type}}) {{$optType}} {
 	return {{$optType}}{func(opts *{{$implType}}) {
 		opts.has_{{.Field.Name}} = true
 		opts.{{.Field.Name}} = {{.Field.Name}}
-	}, "{{.FunctionName}}({{.Field.Type}})"}
+	}, "{{$package}}.{{.FunctionName}}({{.Field.Type}})"}
 }
 func {{.FunctionName}}Flag({{.Field.Name}} *{{.Field.Type}}) {{$optType}} {
 	return {{$optType}}{func(opts *{{$implType}}) {
@@ -397,7 +398,7 @@ func {{.FunctionName}}Flag({{.Field.Name}} *{{.Field.Type}}) {{$optType}} {
 		}
 		opts.has_{{.Field.Name}} = true
 		opts.{{.Field.Name}} = *{{.Field.Name}}
-	}, "{{.FunctionName}}({{.Field.Type}})"}
+	}, "{{$package}}.{{.FunctionName}}({{.Field.Type}})"}
 }
 {{end}}
 type {{.ImplType}} struct {
@@ -572,6 +573,7 @@ func Make{{.OptType}}s(opts ...{{.OptType}}) {{.OptType}}s {
 		RequiredFields     []requiredField
 		FunctionPrefix     string
 		ToTypes            []toType
+		Package            string
 	}{
 		OptType:            optType,
 		ImplType:           implType,
@@ -584,6 +586,7 @@ func Make{{.OptType}}s(opts ...{{.OptType}}) {{.OptType}}s {
 		RequiredFields:     requiredFields,
 		FunctionPrefix:     functionPrefix,
 		ToTypes:            toTypes,
+		Package:            pkg,
 	}); err != nil {
 		return "", err
 	}

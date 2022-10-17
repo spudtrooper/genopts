@@ -1,8 +1,0 @@
-function: "GenOpts2"
-
-field_defs {
-  name: "prefix"
-  type {
-    known: TYPE_BOOL
-  }
-}

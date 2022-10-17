@@ -1,9 +1,14 @@
 // DO NOT EDIT MANUALLY: Generated from https://github.com/spudtrooper/genopts
 package gen
 
-//go:generate genopts --prefix=Update --outfile=updateoptions.go "threads:int"
+//go:generate genopts --prefix=Update --outfile=gen/updateoptions.go "threads:int"
 
-type UpdateOption func(*updateOptionImpl)
+type UpdateOption struct {
+	f func(*updateOptionImpl)
+	s string
+}
+
+func (o UpdateOption) String() string { return o.s }
 
 type UpdateOptions interface {
 	Threads() int
@@ -11,19 +16,19 @@ type UpdateOptions interface {
 }
 
 func UpdateThreads(threads int) UpdateOption {
-	return func(opts *updateOptionImpl) {
+	return UpdateOption{func(opts *updateOptionImpl) {
 		opts.has_threads = true
 		opts.threads = threads
-	}
+	}, "gen.UpdateThreads(int)"}
 }
 func UpdateThreadsFlag(threads *int) UpdateOption {
-	return func(opts *updateOptionImpl) {
+	return UpdateOption{func(opts *updateOptionImpl) {
 		if threads == nil {
 			return
 		}
 		opts.has_threads = true
 		opts.threads = *threads
-	}
+	}, "gen.UpdateThreads(int)"}
 }
 
 type updateOptionImpl struct {
@@ -37,7 +42,7 @@ func (u *updateOptionImpl) HasThreads() bool { return u.has_threads }
 func makeUpdateOptionImpl(opts ...UpdateOption) *updateOptionImpl {
 	res := &updateOptionImpl{}
 	for _, opt := range opts {
-		opt(res)
+		opt.f(res)
 	}
 	return res
 }
