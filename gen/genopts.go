@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 	"strings"
 	"text/template"
 	"unicode"
@@ -475,6 +476,7 @@ func Make{{.OptType}}s(opts ...{{.OptType}}) {{.OptType}}s {
 		}
 		requiredFields = append(requiredFields, rf)
 	}
+	sort.Slice(requiredFields, func(i, j int) bool { return requiredFields[i].Name < requiredFields[j].Name })
 
 	var functions []function
 	var interfaceFunctions []interfaceFunction
@@ -496,8 +498,10 @@ func Make{{.OptType}}s(opts ...{{.OptType}}) {{.OptType}}s {
 			ifn.MaybeQuote = `"`
 		}
 		interfaceFunctions = append(interfaceFunctions, ifn)
-
 	}
+
+	sort.Slice(functions, func(i, j int) bool { return functions[i].FunctionName < functions[j].FunctionName })
+	sort.Slice(interfaceFunctions, func(i, j int) bool { return interfaceFunctions[i].FunctionName < interfaceFunctions[j].FunctionName })
 
 	paramsStructName := title(strings.Replace(optType, "Option", "", 1)) + "Params"
 
