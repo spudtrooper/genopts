@@ -476,7 +476,6 @@ func Make{{.OptType}}s(opts ...{{.OptType}}) {{.OptType}}s {
 		}
 		requiredFields = append(requiredFields, rf)
 	}
-	sort.Slice(requiredFields, func(i, j int) bool { return requiredFields[i].Name < requiredFields[j].Name })
 
 	var functions []function
 	var interfaceFunctions []interfaceFunction
@@ -500,8 +499,12 @@ func Make{{.OptType}}s(opts ...{{.OptType}}) {{.OptType}}s {
 		interfaceFunctions = append(interfaceFunctions, ifn)
 	}
 
+	// Make sure this is idempotent
 	sort.Slice(functions, func(i, j int) bool { return functions[i].FunctionName < functions[j].FunctionName })
 	sort.Slice(interfaceFunctions, func(i, j int) bool { return interfaceFunctions[i].FunctionName < interfaceFunctions[j].FunctionName })
+	sort.Slice(fields, func(i, j int) bool { return fields[i].Name < fields[j].Name })
+	sort.Slice(requiredFields, func(i, j int) bool { return requiredFields[i].Name < requiredFields[j].Name })
+	sort.Slice(toTypes, func(i, j int) bool { return toTypes[i].Prefix < toTypes[j].Prefix })
 
 	paramsStructName := title(strings.Replace(optType, "Option", "", 1)) + "Params"
 

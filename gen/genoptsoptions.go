@@ -178,24 +178,24 @@ func GenOptsRequiredFieldsFlag(requiredFields *string) GenOptsOption {
 }
 
 type genOptsOptionImpl struct {
-	prefixOptsType           bool
-	has_prefixOptsType       bool
-	prefix                   string
-	has_prefix               bool
-	function                 string
-	has_function             bool
-	outfile                  string
-	has_outfile              bool
 	batch                    bool
 	has_batch                bool
-	nocommandline            bool
-	has_nocommandline        bool
-	requiredFields           string
-	has_requiredFields       bool
-	generateParamsStruct     bool
-	has_generateParamsStruct bool
 	extends                  string
 	has_extends              bool
+	function                 string
+	has_function             bool
+	generateParamsStruct     bool
+	has_generateParamsStruct bool
+	nocommandline            bool
+	has_nocommandline        bool
+	outfile                  string
+	has_outfile              bool
+	prefix                   string
+	has_prefix               bool
+	prefixOptsType           bool
+	has_prefixOptsType       bool
+	requiredFields           string
+	has_requiredFields       bool
 }
 
 func (g *genOptsOptionImpl) Batch() bool                   { return g.batch }
