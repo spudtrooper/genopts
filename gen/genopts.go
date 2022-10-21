@@ -438,6 +438,7 @@ func Make{{.OptType}}s(opts ...{{.OptType}}) {{.OptType}}s {
 	var toTypes []toType
 	for _, td := range extends {
 		fieldNames, err := tc.transitiveFields(td)
+		sort.Strings(fieldNames)
 		if err != nil {
 			return "", err
 		}
