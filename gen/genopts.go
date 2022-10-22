@@ -332,7 +332,7 @@ func {{.FunctionName}}({{.Field.Name}} {{.Field.Type}}) {{$optType}} {
 	return {{$optType}}{func(opts *{{$implType}}) {
 		opts.has_{{.Field.Name}} = true
 		opts.{{.Field.Name}} = {{.Field.Name}}
-	}, fmt.Sprintf("{{$package}}.{{.FunctionName}}({{.Field.Type}} %+v)}", {{.Field.Name}})}
+	}, fmt.Sprintf("{{$package}}.{{.FunctionName}}({{.Field.Type}} %+v)", {{.Field.Name}})}
 }
 func {{.FunctionName}}Flag({{.Field.Name}} *{{.Field.Type}}) {{$optType}} {
 	return {{$optType}}{func(opts *{{$implType}}) {
@@ -341,7 +341,7 @@ func {{.FunctionName}}Flag({{.Field.Name}} *{{.Field.Type}}) {{$optType}} {
 		}
 		opts.has_{{.Field.Name}} = true
 		opts.{{.Field.Name}} = *{{.Field.Name}}
-		}, fmt.Sprintf("{{$package}}.{{.FunctionName}}({{.Field.Type}} %+v)}", {{.Field.Name}})}
+		}, fmt.Sprintf("{{$package}}.{{.FunctionName}}({{.Field.Type}} %+v)", {{.Field.Name}})}
 	}
 {{end}}
 type {{.ImplType}} struct {
