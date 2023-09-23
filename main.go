@@ -40,6 +40,7 @@ var (
 	writeConfig    = flag.Bool("write_config", false, "update the expected config file. This is used to set the config after setting explicit flags")
 	batch          = flag.Bool("batch", false, "running in batch mode, this is added to commandlines when --update is set. Don't set this manually")
 	params         = flag.Bool("params", false, "generate a handler struct")
+	musts          = flag.Bool("musts", false, "generate Must* functions")
 )
 
 type Config struct {
@@ -185,6 +186,7 @@ func genOpts(dir, goImportsBin string) error {
 		gen.GenOptsRequiredFields(*required),
 		gen.GenOptsGenerateParamsStruct(*params),
 		gen.GenOptsExtends(*extends),
+		gen.GenOptsMusts(*musts),
 	)
 	if err != nil {
 		return err

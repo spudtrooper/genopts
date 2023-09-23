@@ -33,6 +33,12 @@ type function struct {
 	Field        field
 }
 
+type mustFunction struct {
+	FunctionName    string
+	Field           field
+	DelFunctionName string
+}
+
 type interfaceFunction struct {
 	ObjectName   string
 	FunctionName string
@@ -136,7 +142,7 @@ func GenOpts(optType, implType string, dir, goImportsBin string, fieldDefs []str
 	pkg := path.Base(path.Dir(abs))
 
 	fields := makeFields(fieldDefs)
-	output, err := genOutput(pkg, optType, implType, fields, prefix, opts.GenerateParamsStruct(), reqFields, extendedTypes, tc)
+	output, err := genOutput(pkg, optType, implType, fields, prefix, opts.GenerateParamsStruct(), reqFields, extendedTypes, tc, opts.Musts())
 	if err != nil {
 		return "", err
 	}
@@ -300,12 +306,13 @@ func title(str string) string {
 	return string(s)
 }
 
-func genOutput(pkg, optType, implType string, fields []field, functionPrefix string, genParamsStruct bool, reqFields []reqField, extends []typeDef, tc *typeDefCache) (string, error) {
+func genOutput(pkg, optType, implType string, fields []field, functionPrefix string, genParamsStruct bool, reqFields []reqField, extends []typeDef, tc *typeDefCache, musts bool) (string, error) {
 	const tmpl = `
 {{$optType := .OptType}}
 {{$package := .Package}}
 {{$implType := .ImplType}}
 {{$functionPrefix := .FunctionPrefix}}
+{{$musts := .Musts}}
 
 import (
 	"github.com/spudtrooper/goutil/or"
@@ -321,7 +328,11 @@ func (o {{.OptType}}) String() string { return o.s }
 type {{.OptType}}s interface {
 {{range .InterfaceFunctions}}	
 {{.FunctionName}}() {{.Field.Type}}
-Has{{.FunctionName}}() bool{{end}}
+Has{{.FunctionName}}() bool
+{{- if $musts }}
+ Must{{.FunctionName}}() {{.Field.Type}}
+{{- end }}
+{{- end}}
 {{- range .ToTypes}}
 	To{{.ReturnType}}s() []{{.ReturnType}}
 {{- end}}
@@ -344,6 +355,7 @@ func {{.FunctionName}}Flag({{.Field.Name}} *{{.Field.Type}}) {{$optType}} {
 		}, fmt.Sprintf("{{$package}}.{{.FunctionName}}({{.Field.Type}} %+v)", {{.Field.Name}})}
 	}
 {{end}}
+
 type {{.ImplType}} struct {
 {{range .Fields}}	{{.Name}} {{.Type}}
 has_{{.Name}} bool
@@ -365,6 +377,14 @@ has_{{.Name}} bool
 	func ({{.ObjectName}} *{{$implType}}) {{.FunctionName}}() {{.Field.Type}} { return {{.ObjectName}}.{{.Field.Name}} }
 	{{- end}}
 	func ({{.ObjectName}} *{{$implType}}) Has{{.FunctionName}}() bool { return {{.ObjectName}}.has_{{.Field.Name}} }
+	{{- if $musts }}
+	func ({{.ObjectName}} *{{$implType}}) Must{{.FunctionName}}() {{.Field.Type}} { 
+		if !{{.ObjectName}}.has_{{.Field.Name}} {
+			panic("{{.Field.Name}} is required")
+		}
+		return {{.ObjectName}}.{{.Field.Name}} 
+	}
+	{{- end }}
 {{- end}}
 
 {{if .GenParamsStruct}}
@@ -523,6 +543,7 @@ func Make{{.OptType}}s(opts ...{{.OptType}}) {{.OptType}}s {
 		FunctionPrefix     string
 		ToTypes            []toType
 		Package            string
+		Musts              bool
 	}{
 		OptType:            optType,
 		ImplType:           implType,
@@ -536,6 +557,7 @@ func Make{{.OptType}}s(opts ...{{.OptType}}) {{.OptType}}s {
 		FunctionPrefix:     functionPrefix,
 		ToTypes:            toTypes,
 		Package:            pkg,
+		Musts:              musts,
 	}); err != nil {
 		return "", err
 	}

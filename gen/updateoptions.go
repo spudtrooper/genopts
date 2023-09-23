@@ -21,7 +21,7 @@ func UpdateThreads(threads int) UpdateOption {
 	return UpdateOption{func(opts *updateOptionImpl) {
 		opts.has_threads = true
 		opts.threads = threads
-	}, fmt.Sprintf("gen.UpdateThreads(int %+v)}", threads)}
+	}, fmt.Sprintf("gen.UpdateThreads(int %+v)", threads)}
 }
 func UpdateThreadsFlag(threads *int) UpdateOption {
 	return UpdateOption{func(opts *updateOptionImpl) {
@@ -30,7 +30,7 @@ func UpdateThreadsFlag(threads *int) UpdateOption {
 		}
 		opts.has_threads = true
 		opts.threads = *threads
-	}, fmt.Sprintf("gen.UpdateThreads(int %+v)}", threads)}
+	}, fmt.Sprintf("gen.UpdateThreads(int %+v)", threads)}
 }
 
 type updateOptionImpl struct {
